@@ -34,6 +34,7 @@ public class Lead {
     private LocalDateTime updatedAt;
 
     @CreatedBy
+    @Tets
     @ManyToOne
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
