@@ -30,7 +30,7 @@ public class User implements UserDetails {
     private String password;
 
     private String email;
-    private String fullname;
+    private String fullname, avatar;
     private Long phone;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -48,6 +48,9 @@ public class User implements UserDetails {
                 .map(role -> (GrantedAuthority) role)
                 .collect(Collectors.toSet());
     }
+
+    @OneToMany(mappedBy = "assignedTo")
+    private Set<Lead> assignedLeads;
 
     @Override
     public boolean isAccountNonExpired() {

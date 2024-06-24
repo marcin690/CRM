@@ -2,6 +2,8 @@ package wh.plus.crm.dto;
 
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class UserDTO {
     private Long id;

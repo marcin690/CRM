@@ -31,7 +31,7 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtUtil, userService);
     }
 
-    private static final String[] AUTH_WHITELIST = {"/auth/register", "/auth/login", "/users/**"};
+    private static final String[] AUTH_WHITELIST = {"/auth/register", "/auth/login"};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

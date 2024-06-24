@@ -12,7 +12,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table
+@Table(name = "contact_info")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
@@ -29,8 +29,6 @@ public class ContactInfo {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @CreatedBy
-    private Long createdBy;
 
     private String fullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
 
