@@ -4,9 +4,12 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.model.lead.LeadStatus;
 import wh.plus.crm.repository.LeadRepository;
+import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.model.User;
 
@@ -22,6 +25,7 @@ public class LeadService {
 
     private final LeadRepository leadRepository;
     private final UserRepository userRepository;
+    private final LeadStatusRepository leadStatusRepository;
 
     public List<Lead> findAll() {
         logger.info("Fetching all leads");
@@ -53,21 +57,54 @@ public class LeadService {
     @Transactional
     public Lead update(Long id, Lead leadDetails) {
         logger.info("Updating lead id: {}", id);
+        logger.info("Received lead details: {}", leadDetails);
         Optional<Lead> existingLead = leadRepository.findById(id);
         if (existingLead.isPresent()) {
             Lead lead = existingLead.get();
+
             if (leadDetails.getName() != null) {
                 logger.info("Updating name to: {}", leadDetails.getName());
                 lead.setName(leadDetails.getName());
             }
+
+            if(leadDetails.getDescription() != null) {
+                lead.setDescription(leadDetails.getDescription());
+            }
+
             if (leadDetails.getLeadValue() != null) {
                 logger.info("Updating leadValue to: {}", leadDetails.getLeadValue());
                 lead.setLeadValue(leadDetails.getLeadValue());
             }
+
+            if(leadDetails.getLeadRejectedReasonComment() != null) {
+                logger.info("Updating leadRejectedReasonComment: {}", leadDetails.getLeadRejectedReasonComment());
+                lead.setLeadRejectedReasonComment(leadDetails.getLeadRejectedReasonComment());
+            }
+
+            //Aktualizacja statusu leada
+            if (leadDetails.getLeadStatus() != null) {
+                logger.info("Received leadStatus details: {}", leadDetails.getLeadStatus());
+                Optional<LeadStatus> leadStatusOptional = leadStatusRepository.findById(leadDetails.getLeadStatus().getId());
+                if (leadStatusOptional.isPresent()) {
+                    logger.info("Updating leadStatus to: {}", leadDetails.getLeadStatus().getStatusName());
+                    lead.setLeadStatus(leadStatusOptional.get());
+                } else {
+                    logger.error("LeadStatus not found: {}", leadDetails.getLeadStatus().getId());
+                    throw new NoSuchElementException("LeadStatus not found");
+                }
+            }
+
+
+
+
+
             return leadRepository.save(lead);
         } else {
             logger.error("Lead not found: {}", id);
             throw new NoSuchElementException("Lead not found");
         }
     }
+
+
+
 }

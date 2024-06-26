@@ -40,6 +40,7 @@ public class User implements UserDetails {
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "createdBy")
+    @JsonIgnore
     private Set<Lead> leads;
 
     @Override
@@ -50,6 +51,7 @@ public class User implements UserDetails {
     }
 
     @OneToMany(mappedBy = "assignedTo")
+    @JsonIgnore
     private Set<Lead> assignedLeads;
 
     @Override
@@ -70,5 +72,16 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    // Dodane metody zarządzania kolekcjami
+    public void addAssignedLead(Lead lead) {
+        this.assignedLeads.add(lead);
+        lead.setAssignedTo(this);
+    }
+
+    public void removeAssignedLead(Lead lead) {
+        this.assignedLeads.remove(lead);
+        lead.setAssignedTo(null);
     }
 }

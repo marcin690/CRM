@@ -21,6 +21,7 @@ public class AuditorAwareImpl implements AuditorAware<User> {
     public Optional<User> getCurrentAuditor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
+            logger.debug("Authentication is null or not authenticated");
             return Optional.empty();
         }
         String username = authentication.getName();
@@ -30,6 +31,12 @@ public class AuditorAwareImpl implements AuditorAware<User> {
             return Optional.empty();
         }
 
-        return userRepository.findByUsername(username);
+        try {
+            // Upewnij się, że findByUsername nie powoduje zapętlenia
+            return userRepository.findByUsername(username);
+        } catch (Exception e) {
+            logger.error("Error retrieving user by username: " + username, e);
+            return Optional.empty();
+        }
     }
 }
