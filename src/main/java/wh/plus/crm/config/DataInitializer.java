@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import wh.plus.crm.model.Role;
+import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
+import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.RoleRepository;
 import wh.plus.crm.model.lead.LeadStatus.StatusType;
@@ -21,12 +23,15 @@ public class DataInitializer {
 
     private final RoleRepository roleRepository;
     private final LeadStatusRepository leadStatusRepository;
+    private final LeadSourceRepository leadSourceRepository;
 
     @PostConstruct
     @Transactional
     public void initialize() {
         initializeRoles();
         initializeLeadStatuses();
+        initializeLeadSource();
+
     }
 
     private void initializeLeadStatuses() {
@@ -43,6 +48,28 @@ public class DataInitializer {
         for(LeadStatus leadStatus : statuses) {
             if(!leadStatusRepository.findByStatusName(leadStatus.getStatusName()).isPresent()){
                 leadStatusRepository.save(leadStatus);
+            }
+        }
+    }
+
+    private void initializeLeadSource() {
+        List<LeadSource> sources = Arrays.asList(
+                new LeadSource(1L, "WEBSITE_CONTACT", "Kontakt ze strony"),
+                new LeadSource(2L, "DIRECT_CONTACT", "Kontakt własny"),
+                new LeadSource(3L, "RETURNING_CLIENT", "Klient powracający"),
+                new LeadSource(4L, "PHONE_CONTACT", "Kontakt telefoniczny"),
+                new LeadSource(5L, "EMAIL_CONTACT", "Formularz kontaktowy"),
+                new LeadSource(6L, "DEIGN_OFFICE", "Biuro projektowe"),
+                new LeadSource(7L, "TRADE_SHOW", "Targi"),
+                new LeadSource(8L, "ZWIADOWCA", "Zwiadowca"),
+                new LeadSource(9L, "OTHER", "Inne"),
+                new LeadSource(10L, "KOMPAS", "Kompas"),
+                new LeadSource(11L, "FACEBOOK", "Facebook")
+                );
+
+        for (LeadSource leadSource : sources) {
+            if(!leadSourceRepository.findByName(leadSource.getName()).isPresent()){
+                leadSourceRepository.save(leadSource);
             }
         }
     }

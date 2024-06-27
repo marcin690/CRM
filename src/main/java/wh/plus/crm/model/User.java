@@ -32,6 +32,7 @@ public class User implements UserDetails {
     private String email;
     private String fullname, avatar;
     private Long phone;
+    private boolean isSalesRepresentative;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",
@@ -39,7 +40,7 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
-    @OneToMany(mappedBy = "createdBy")
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Lead> leads;
 

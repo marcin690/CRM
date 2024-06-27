@@ -33,4 +33,6 @@ public class ContactInfo {
     private String fullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
 
     private Long clientPhone, vatNumber;
+
+    private boolean isClient;
 }

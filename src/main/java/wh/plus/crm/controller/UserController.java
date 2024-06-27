@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import wh.plus.crm.dto.UserDTO;
 import wh.plus.crm.model.User;
+import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.service.UserService;
 
 import java.util.List;
@@ -17,27 +18,34 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @GetMapping
     public ResponseEntity<List<UserDTO>> findAll() {
         List<UserDTO> users = userService.findAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @DeleteMapping
     public ResponseEntity<User> deleteUsers(@RequestBody List<Long> ids) {
         userService.deleteUsers(ids);
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
     @PatchMapping("/{id}")
     public ResponseEntity<UserDTO> editUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
 
         userDTO.setId(id);
         UserDTO updateUser = userService.updateUserPartially(userDTO);
         return new ResponseEntity<>(updateUser, HttpStatus.OK);
+    }
+
+    @GetMapping("/sellers")
+    public List<User> getSellers() {
+        return userRepository.findByIsSalesRepresentativeTrue();
     }
 }

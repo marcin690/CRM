@@ -7,8 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
 import wh.plus.crm.repository.LeadRepository;
+import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.model.User;
@@ -26,6 +28,7 @@ public class LeadService {
     private final LeadRepository leadRepository;
     private final UserRepository userRepository;
     private final LeadStatusRepository leadStatusRepository;
+    private final LeadSourceRepository leadSourceRepository;
 
     public List<Lead> findAll() {
         logger.info("Fetching all leads");
@@ -54,6 +57,7 @@ public class LeadService {
     }
 
 
+
     @Transactional
     public Lead update(Long id, Lead leadDetails) {
         logger.info("Updating lead id: {}", id);
@@ -67,7 +71,7 @@ public class LeadService {
                 lead.setName(leadDetails.getName());
             }
 
-            if(leadDetails.getDescription() != null) {
+            if (leadDetails.getDescription() != null) {
                 lead.setDescription(leadDetails.getDescription());
             }
 
@@ -76,12 +80,16 @@ public class LeadService {
                 lead.setLeadValue(leadDetails.getLeadValue());
             }
 
-            if(leadDetails.getLeadRejectedReasonComment() != null) {
+            if (leadDetails.getLeadRejectedReasonComment() != null) {
                 logger.info("Updating leadRejectedReasonComment: {}", leadDetails.getLeadRejectedReasonComment());
                 lead.setLeadRejectedReasonComment(leadDetails.getLeadRejectedReasonComment());
             }
 
-            //Aktualizacja statusu leada
+            if(leadDetails.getRoomsQuantity() != null ) {
+                lead.setRoomsQuantity(leadDetails.getRoomsQuantity());
+            }
+
+            // Aktualizacja statusu leada
             if (leadDetails.getLeadStatus() != null) {
                 logger.info("Received leadStatus details: {}", leadDetails.getLeadStatus());
                 Optional<LeadStatus> leadStatusOptional = leadStatusRepository.findById(leadDetails.getLeadStatus().getId());
@@ -94,9 +102,30 @@ public class LeadService {
                 }
             }
 
+            // Aktualizacja źródła leada
+            if (leadDetails.getLeadSource() != null) {
+                Optional<LeadSource> leadSourceOptional = leadSourceRepository.findById(leadDetails.getLeadSource().getId());
+                if (leadSourceOptional.isPresent()) {
+                    lead.setLeadSource(leadSourceOptional.get());
+                } else {
+                    logger.error("LeadSource not found: {}", leadDetails.getLeadSource().getId());
+                    throw new NoSuchElementException("LeadSource not found");
+                }
+            }
 
-
-
+            // Aktualizacja przypisanej osoby
+            if (leadDetails.getAssignedTo() != null) {
+                Optional<User> assignedToOptional = userRepository.findById(leadDetails.getAssignedTo().getId());
+                if (assignedToOptional.isPresent()) {
+                    User assignedTo = assignedToOptional.get();
+                    logger.info("Updating assignedTo to: {}", assignedTo.getUsername());
+                    lead.setAssignedTo(assignedTo);
+                    assignedTo.addAssignedLead(lead); // Upewnij się, że relacja jest zarządzana dwukierunkowo
+                } else {
+                    logger.error("AssignedTo user not found: {}", leadDetails.getAssignedTo().getId());
+                    throw new NoSuchElementException("AssignedTo user not found");
+                }
+            }
 
             return leadRepository.save(lead);
         } else {
@@ -104,6 +133,7 @@ public class LeadService {
             throw new NoSuchElementException("Lead not found");
         }
     }
+
 
 
 

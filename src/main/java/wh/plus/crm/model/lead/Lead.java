@@ -8,7 +8,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import wh.plus.crm.model.LeadOfferRejectedReason;
 import wh.plus.crm.model.User;
 import wh.plus.crm.model.contactInfo.ContactInfo;
 
@@ -45,7 +44,9 @@ public class Lead {
     private LeadStatus leadStatus;
 
     private String name;
-    private Long leadValue;
+    private Long leadValue, roomsQuantity;
+
+    private LocalDateTime planedExecutionDate;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -53,9 +54,6 @@ public class Lead {
 
     private String leadRejectedReasonComment;
 
-    @ManyToOne
-    @JoinColumn(name = "rejected_reason_id", nullable = true)
-    private LeadOfferRejectedReason leadRejectedReason;
 
     @ManyToOne
     @JoinColumn(name = "assigned_to_id", nullable = true)
@@ -65,6 +63,19 @@ public class Lead {
     @ManyToOne
     @JoinColumn(name = "contact_info_id")
     private ContactInfo contactInfo;
+
+    @ManyToOne
+    @JoinColumn(name = "lead_source_id")
+    private LeadSource leadSource;
+
+    public void setAssignedTo(User assignedTo){
+        this.assignedTo = assignedTo;
+        if(assignedTo != null && !assignedTo.getAssignedLeads().contains(this)) {
+            assignedTo.getAssignedLeads().add(this);
+        }
+    }
+
+
 
 
 
