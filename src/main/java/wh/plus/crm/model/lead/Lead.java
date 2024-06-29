@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "leads")
 @EntityListeners(AuditingEntityListener.class)
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -46,7 +47,7 @@ public class Lead {
     private String name;
     private Long leadValue, roomsQuantity;
 
-    private LocalDateTime planedExecutionDate;
+    private LocalDateTime executionDate;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -67,15 +68,6 @@ public class Lead {
     @ManyToOne
     @JoinColumn(name = "lead_source_id")
     private LeadSource leadSource;
-
-    public void setAssignedTo(User assignedTo){
-        this.assignedTo = assignedTo;
-        if(assignedTo != null && !assignedTo.getAssignedLeads().contains(this)) {
-            assignedTo.getAssignedLeads().add(this);
-        }
-    }
-
-
 
 
 

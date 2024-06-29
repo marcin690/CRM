@@ -2,6 +2,7 @@ package wh.plus.crm.service;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.mapstruct.control.MappingControl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.parameters.P;
@@ -15,9 +16,14 @@ import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.model.User;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 
 @Service
 @AllArgsConstructor
@@ -29,6 +35,9 @@ public class LeadService {
     private final UserRepository userRepository;
     private final LeadStatusRepository leadStatusRepository;
     private final LeadSourceRepository leadSourceRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public List<Lead> findAll() {
         logger.info("Fetching all leads");
@@ -56,85 +65,77 @@ public class LeadService {
         }
     }
 
-
-
     @Transactional
     public Lead update(Long id, Lead leadDetails) {
         logger.info("Updating lead id: {}", id);
-        logger.info("Received lead details: {}", leadDetails);
-        Optional<Lead> existingLead = leadRepository.findById(id);
-        if (existingLead.isPresent()) {
-            Lead lead = existingLead.get();
-
-            if (leadDetails.getName() != null) {
-                logger.info("Updating name to: {}", leadDetails.getName());
-                lead.setName(leadDetails.getName());
-            }
-
-            if (leadDetails.getDescription() != null) {
-                lead.setDescription(leadDetails.getDescription());
-            }
-
-            if (leadDetails.getLeadValue() != null) {
-                logger.info("Updating leadValue to: {}", leadDetails.getLeadValue());
-                lead.setLeadValue(leadDetails.getLeadValue());
-            }
-
-            if (leadDetails.getLeadRejectedReasonComment() != null) {
-                logger.info("Updating leadRejectedReasonComment: {}", leadDetails.getLeadRejectedReasonComment());
-                lead.setLeadRejectedReasonComment(leadDetails.getLeadRejectedReasonComment());
-            }
-
-            if(leadDetails.getRoomsQuantity() != null ) {
-                lead.setRoomsQuantity(leadDetails.getRoomsQuantity());
-            }
-
-            // Aktualizacja statusu leada
-            if (leadDetails.getLeadStatus() != null) {
-                logger.info("Received leadStatus details: {}", leadDetails.getLeadStatus());
-                Optional<LeadStatus> leadStatusOptional = leadStatusRepository.findById(leadDetails.getLeadStatus().getId());
-                if (leadStatusOptional.isPresent()) {
-                    logger.info("Updating leadStatus to: {}", leadDetails.getLeadStatus().getStatusName());
-                    lead.setLeadStatus(leadStatusOptional.get());
-                } else {
-                    logger.error("LeadStatus not found: {}", leadDetails.getLeadStatus().getId());
-                    throw new NoSuchElementException("LeadStatus not found");
-                }
-            }
-
-            // Aktualizacja źródła leada
-            if (leadDetails.getLeadSource() != null) {
-                Optional<LeadSource> leadSourceOptional = leadSourceRepository.findById(leadDetails.getLeadSource().getId());
-                if (leadSourceOptional.isPresent()) {
-                    lead.setLeadSource(leadSourceOptional.get());
-                } else {
-                    logger.error("LeadSource not found: {}", leadDetails.getLeadSource().getId());
-                    throw new NoSuchElementException("LeadSource not found");
-                }
-            }
-
-            // Aktualizacja przypisanej osoby
-            if (leadDetails.getAssignedTo() != null) {
-                Optional<User> assignedToOptional = userRepository.findById(leadDetails.getAssignedTo().getId());
-                if (assignedToOptional.isPresent()) {
-                    User assignedTo = assignedToOptional.get();
-                    logger.info("Updating assignedTo to: {}", assignedTo.getUsername());
-                    lead.setAssignedTo(assignedTo);
-                    assignedTo.addAssignedLead(lead); // Upewnij się, że relacja jest zarządzana dwukierunkowo
-                } else {
-                    logger.error("AssignedTo user not found: {}", leadDetails.getAssignedTo().getId());
-                    throw new NoSuchElementException("AssignedTo user not found");
-                }
-            }
-
-            return leadRepository.save(lead);
-        } else {
-            logger.error("Lead not found: {}", id);
+        Lead existingLead = entityManager.find(Lead.class, id);
+        if (existingLead == null) {
             throw new NoSuchElementException("Lead not found");
         }
+
+        // Aktualizowanie właściwości leada
+        updateLeadProperties(existingLead, leadDetails);
+
+        // Aktualizacja przypisanej osoby
+        if (leadDetails.getAssignedTo() != null) {
+            User newAssignedUser = entityManager.find(User.class, leadDetails.getAssignedTo().getId());
+            if (newAssignedUser == null) {
+                throw new NoSuchElementException("Assigned user not found");
+            }
+
+            // Odpięcie leada od obecnie przypisanego użytkownika (jeśli jest przypisany)
+            if (existingLead.getAssignedTo() != null) {
+                existingLead.getAssignedTo().getAssignedLeads().remove(existingLead);
+                entityManager.merge(existingLead.getAssignedTo());
+            }
+
+            // Przypisanie leada do nowego użytkownika
+            newAssignedUser.getAssignedLeads().add(existingLead);
+            existingLead.setAssignedTo(newAssignedUser);
+            entityManager.merge(newAssignedUser);
+        } else {
+            if (existingLead.getAssignedTo() != null) {
+                existingLead.getAssignedTo().getAssignedLeads().remove(existingLead);
+                entityManager.merge(existingLead.getAssignedTo());
+                existingLead.setAssignedTo(null);
+            }
+        }
+
+        return entityManager.merge(existingLead);
     }
 
-
-
-
+    private void updateLeadProperties(Lead existingLead, Lead leadDetails) {
+        if (leadDetails.getName() != null) {
+            existingLead.setName(leadDetails.getName());
+        }
+        if (leadDetails.getDescription() != null) {
+            existingLead.setDescription(leadDetails.getDescription());
+        }
+        if (leadDetails.getLeadValue() != null) {
+            existingLead.setLeadValue(leadDetails.getLeadValue());
+        }
+        if (leadDetails.getLeadRejectedReasonComment() != null) {
+            existingLead.setLeadRejectedReasonComment(leadDetails.getLeadRejectedReasonComment());
+        }
+        if (leadDetails.getRoomsQuantity() != null) {
+            existingLead.setRoomsQuantity(leadDetails.getRoomsQuantity());
+        }
+        if (leadDetails.getExecutionDate() != null) {
+            existingLead.setExecutionDate(leadDetails.getExecutionDate());
+        }
+        if (leadDetails.getLeadStatus() != null) {
+            LeadStatus leadStatus = entityManager.find(LeadStatus.class, leadDetails.getLeadStatus().getId());
+            if (leadStatus == null) {
+                throw new NoSuchElementException("LeadStatus not found");
+            }
+            existingLead.setLeadStatus(leadStatus);
+        }
+        if (leadDetails.getLeadSource() != null) {
+            LeadSource leadSource = entityManager.find(LeadSource.class, leadDetails.getLeadSource().getId());
+            if (leadSource == null) {
+                throw new NoSuchElementException("LeadSource not found");
+            }
+            existingLead.setLeadSource(leadSource);
+        }
+    }
 }

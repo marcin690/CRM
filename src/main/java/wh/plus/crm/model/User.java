@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import wh.plus.crm.model.lead.Lead;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,9 +41,10 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
-    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.MERGE, orphanRemoval = true)
     @JsonIgnore
-    private Set<Lead> leads;
+    private Set<Lead> assignedLeads = new HashSet<>();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -51,9 +53,7 @@ public class User implements UserDetails {
                 .collect(Collectors.toSet());
     }
 
-    @OneToMany(mappedBy = "assignedTo")
-    @JsonIgnore
-    private Set<Lead> assignedLeads;
+
 
     @Override
     public boolean isAccountNonExpired() {
@@ -75,14 +75,6 @@ public class User implements UserDetails {
         return true;
     }
 
-    // Dodane metody zarządzania kolekcjami
-    public void addAssignedLead(Lead lead) {
-        this.assignedLeads.add(lead);
-        lead.setAssignedTo(this);
-    }
 
-    public void removeAssignedLead(Lead lead) {
-        this.assignedLeads.remove(lead);
-        lead.setAssignedTo(null);
-    }
+
 }
