@@ -12,6 +12,19 @@ import wh.plus.crm.service.LeadService;
 import java.util.List;
 import java.util.Optional;
 
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.service.LeadService;
+
+import java.util.List;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/leads")
 public class LeadController {
@@ -40,17 +53,17 @@ public class LeadController {
         return new ResponseEntity<>(createdLead, HttpStatus.CREATED);
     }
 
-    @PatchMapping( "/{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Lead> updateLead(@PathVariable Long id, @RequestBody Lead lead) {
         Lead updatedLead = leadService.update(id, lead);
-        if (updatedLead != null) {
-            return new ResponseEntity<>(updatedLead, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
 
-
-
+    @PatchMapping("/{id}/assign")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<Lead> assignUserToLead(@PathVariable Long id, @RequestParam Long userId) {
+        Lead updatedLead = leadService.assignUser(id, userId);
+        return new ResponseEntity<>(updatedLead, HttpStatus.OK);
+    }
 }

@@ -41,9 +41,7 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
-    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.MERGE, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Lead> assignedLeads = new HashSet<>();
+
 
 
     @Override
