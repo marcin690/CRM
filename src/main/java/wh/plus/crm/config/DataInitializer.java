@@ -3,19 +3,21 @@ package wh.plus.crm.config;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import wh.plus.crm.model.Role;
+import wh.plus.crm.model.User;
 import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
 import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.RoleRepository;
 import wh.plus.crm.model.lead.LeadStatus.StatusType;
+import wh.plus.crm.repository.UserRepository;
 
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Component
 @AllArgsConstructor
@@ -24,6 +26,8 @@ public class DataInitializer {
     private final RoleRepository roleRepository;
     private final LeadStatusRepository leadStatusRepository;
     private final LeadSourceRepository leadSourceRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PostConstruct
     @Transactional
@@ -31,7 +35,23 @@ public class DataInitializer {
         initializeRoles();
         initializeLeadStatuses();
         initializeLeadSource();
+        initializeAdminUser();
 
+    }
+
+    private void initializeAdminUser() {
+        Optional<User> adminOptional = userRepository.findByUsername("admin");
+        if (adminOptional.isEmpty()) {
+            Role adminRole = roleRepository.findByName(Role.RoleName.ADMIN)
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+
+            User adminUser = new User();
+            adminUser.setUsername("admin");
+            adminUser.setPassword(passwordEncoder.encode("admin"));
+            adminUser.setRoles(Set.of(adminRole));
+
+            userRepository.save(adminUser);
+        }
     }
 
     private void initializeLeadStatuses() {
@@ -51,6 +71,8 @@ public class DataInitializer {
             }
         }
     }
+
+
 
     private void initializeLeadSource() {
         List<LeadSource> sources = Arrays.asList(

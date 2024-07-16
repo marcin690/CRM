@@ -41,6 +41,10 @@ public class Lead {
     private User createdBy;
 
     @ManyToOne
+    @JoinColumn(name = "assign_to_id")
+    private User assignTo;
+
+    @ManyToOne
     @JoinColumn(name = "lead_status_id")
     private LeadStatus leadStatus;
 
@@ -54,11 +58,6 @@ public class Lead {
     private String description;
 
     private String leadRejectedReasonComment;
-
-    @ManyToOne
-    @JoinColumn(name = "assigned_to_id", nullable = true)
-    @JsonIgnoreProperties({"username", "password", "email", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
-    private User assignedTo;
 
     @ManyToOne
     @JoinColumn(name = "contact_info_id")

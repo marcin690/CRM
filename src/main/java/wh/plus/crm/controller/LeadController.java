@@ -60,10 +60,4 @@ public class LeadController {
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}/assign")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<Lead> assignUserToLead(@PathVariable Long id, @RequestParam Long userId) {
-        Lead updatedLead = leadService.assignUser(id, userId);
-        return new ResponseEntity<>(updatedLead, HttpStatus.OK);
-    }
 }

@@ -6,13 +6,11 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import wh.plus.crm.model.contactInfo.ContactInfo;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
-import wh.plus.crm.repository.LeadRepository;
-import wh.plus.crm.repository.LeadSourceRepository;
-import wh.plus.crm.repository.LeadStatusRepository;
-import wh.plus.crm.repository.UserRepository;
+import wh.plus.crm.repository.*;
 import wh.plus.crm.model.User;
 
 
@@ -33,6 +31,7 @@ public class LeadService {
     private final LeadStatusRepository leadStatusRepository;
     private final LeadSourceRepository leadSourceRepository;
     private final EntityManager entityManager; // Dodane
+    private final ContactInfoRepository contactInfoRepository;
 
     public List<Lead> findAll() {
         logger.info("Fetching all leads");
@@ -59,20 +58,7 @@ public class LeadService {
             throw new NoSuchElementException("User not found");
         }
     }
-    @Transactional
-    public Lead assignUser(Long leadId, Long userId) {
-        logger.info("Assigning user id: {} to lead id: {}", userId, leadId);
-        Lead lead = leadRepository.findById(leadId)
-                .orElseThrow(() -> new NoSuchElementException("Lead not found"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-        // Odłączamy użytkownika, aby uniknąć problemu z wspólnymi odniesieniami
-        entityManager.detach(user);
-
-        lead.setAssignedTo(user);
-        return leadRepository.save(lead);
-    }
 
     @Transactional
     public Lead update(Long id, Lead leadDetails) {
@@ -82,15 +68,6 @@ public class LeadService {
 
         // Aktualizowanie właściwości leada
         updateLeadProperties(existingLead, leadDetails);
-
-        // Aktualizacja przypisanej osoby
-        if (leadDetails.getAssignedTo() != null) {
-            User newAssignedUser = userRepository.findById(leadDetails.getAssignedTo().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Assigned user not found"));
-            existingLead.setAssignedTo(newAssignedUser);
-        } else {
-            existingLead.setAssignedTo(null);
-        }
 
         Lead updatedLead = leadRepository.save(existingLead);
         logger.info("Updated lead: {}", updatedLead);
@@ -128,6 +105,19 @@ public class LeadService {
                     .orElseThrow(() -> new NoSuchElementException("LeadSource not found"));
             existingLead.setLeadSource(leadSource);
         }
+        if (leadDetails.getContactInfo()!= null && leadDetails.getContactInfo().getId()!= null) {
+
+            ContactInfo newContactInfo = contactInfoRepository.findById(leadDetails.getContactInfo().getId())
+                    .orElseThrow(() -> new NoSuchElementException("ContactInfo not found"));
+            existingLead.setContactInfo(newContactInfo);
+        }
+        if(leadDetails.getAssignTo() != null && leadDetails.getAssignTo().getId() != null){
+            User assignedUser = userRepository.findById(leadDetails.getAssignTo().getId())
+                    .orElseThrow(() -> new NoSuchElementException("User not found"));
+            existingLead.setAssignTo(assignedUser);
+        }
+
+
     }
 
 
