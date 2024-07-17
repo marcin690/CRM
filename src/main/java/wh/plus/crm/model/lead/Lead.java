@@ -28,6 +28,9 @@ public class Lead {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private int version;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -37,11 +40,12 @@ public class Lead {
     @CreatedBy
     @ManyToOne
     @JoinColumn(name = "created_by_id", nullable = false)
-    @JsonIgnoreProperties({"username", "password", "email", "fullname", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
+    @JsonIgnoreProperties({"assignedLeads", "roles","username", "password", "email", "fullname", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
     private User createdBy;
 
     @ManyToOne
     @JoinColumn(name = "assign_to_id")
+    @JsonIgnoreProperties({"assignedLeads", "createdBy", "roles"})
     private User assignTo;
 
     @ManyToOne

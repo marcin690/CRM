@@ -59,23 +59,27 @@ public class LeadService {
         }
     }
 
-
     @Transactional
     public Lead update(Long id, Lead leadDetails) {
         logger.info("Updating lead id: {}", id);
         Lead existingLead = leadRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
+        // Detach current state of existingLead from Hibernate session to prevent shared references issues
+        entityManager.detach(existingLead);
+
         // Aktualizowanie właściwości leada
         updateLeadProperties(existingLead, leadDetails);
 
+        // Save updated lead
         Lead updatedLead = leadRepository.save(existingLead);
         logger.info("Updated lead: {}", updatedLead);
         return updatedLead;
     }
 
-
     private void updateLeadProperties(Lead existingLead, Lead leadDetails) {
+        logger.info("Starting updateLeadProperties");
+
         if (leadDetails.getName() != null) {
             existingLead.setName(leadDetails.getName());
         }
@@ -98,27 +102,27 @@ public class LeadService {
             LeadStatus leadStatus = leadStatusRepository.findById(leadDetails.getLeadStatus().getId())
                     .orElseThrow(() -> new NoSuchElementException("LeadStatus not found"));
             existingLead.setLeadStatus(leadStatus);
-            logger.info("Updated lead status to: {}", leadStatus.getStatusName());
         }
         if (leadDetails.getLeadSource() != null) {
             LeadSource leadSource = leadSourceRepository.findById(leadDetails.getLeadSource().getId())
                     .orElseThrow(() -> new NoSuchElementException("LeadSource not found"));
             existingLead.setLeadSource(leadSource);
         }
-        if (leadDetails.getContactInfo()!= null && leadDetails.getContactInfo().getId()!= null) {
-
+        if (leadDetails.getContactInfo() != null && leadDetails.getContactInfo().getId() != null) {
             ContactInfo newContactInfo = contactInfoRepository.findById(leadDetails.getContactInfo().getId())
                     .orElseThrow(() -> new NoSuchElementException("ContactInfo not found"));
             existingLead.setContactInfo(newContactInfo);
         }
-        if(leadDetails.getAssignTo() != null && leadDetails.getAssignTo().getId() != null){
+        if (leadDetails.getAssignTo() != null && leadDetails.getAssignTo().getId() != null) {
             User assignedUser = userRepository.findById(leadDetails.getAssignTo().getId())
                     .orElseThrow(() -> new NoSuchElementException("User not found"));
             existingLead.setAssignTo(assignedUser);
         }
 
-
+        logger.info("Finished updateLeadProperties");
     }
+
+
 
 
 }

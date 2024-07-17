@@ -39,8 +39,12 @@ public class User implements UserDetails {
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JsonIgnoreProperties("users")  // Dodane
     private Set<Role> roles;
 
+    @OneToMany(mappedBy = "assignTo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  // Dodane
+    private Set<Lead> assignedLeads = new HashSet<>();
 
 
 
