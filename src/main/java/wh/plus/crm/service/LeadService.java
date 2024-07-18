@@ -6,19 +6,18 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import wh.plus.crm.dto.LeadDTO;
+import wh.plus.crm.mapper.LeadMapper;
 import wh.plus.crm.model.contactInfo.ContactInfo;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
 import wh.plus.crm.repository.*;
 import wh.plus.crm.model.User;
-
-
-
-
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -32,27 +31,27 @@ public class LeadService {
     private final LeadSourceRepository leadSourceRepository;
     private final EntityManager entityManager; // Dodane
     private final ContactInfoRepository contactInfoRepository;
+    private final LeadMapper leadMapper;
 
-    public List<Lead> findAll() {
-        logger.info("Fetching all leads");
-        return leadRepository.findAll();
+    public List<LeadDTO> findAll() {
+       return leadRepository.findAll().stream().map(leadMapper::leadToLeadDTO).collect(Collectors.toList());
     }
 
-    public Optional<Lead> findById(Long id) {
-        logger.info("Fetching lead by id: {}", id);
-        return leadRepository.findById(id);
+    public Optional<LeadDTO> findById(Long id) {
+        return leadRepository.findById(id)
+                .map(leadMapper::leadToLeadDTO);
     }
 
     @Transactional
-    public Lead save(Lead lead, String username) {
-        logger.info("Saving new lead for user: {}", username);
+    public LeadDTO save(LeadDTO leadDTO, String username) {
+        Lead lead = leadMapper.leadDTOtoLead(leadDTO);
         Optional<User> user = userRepository.findByUsername(username);
         if (user.isPresent()) {
             lead.setCreatedBy(user.get());
             logger.info("User found: {}", user.get().getUsername());
             Lead savedLead = leadRepository.save(lead);
             logger.info("Lead saved with id: {}", savedLead.getId());
-            return savedLead;
+            return leadMapper.leadToLeadDTO(savedLead);
         } else {
             logger.error("User not found: {}", username);
             throw new NoSuchElementException("User not found");
@@ -60,21 +59,16 @@ public class LeadService {
     }
 
     @Transactional
-    public Lead update(Long id, Lead leadDetails) {
+    public LeadDTO update(Long id, LeadDTO leadDetailsDTO) {
         logger.info("Updating lead id: {}", id);
         Lead existingLead = leadRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
-        // Detach current state of existingLead from Hibernate session to prevent shared references issues
-        entityManager.detach(existingLead);
-
-        // Aktualizowanie właściwości leada
+        Lead leadDetails = leadMapper.leadDTOtoLead(leadDetailsDTO);
         updateLeadProperties(existingLead, leadDetails);
 
-        // Save updated lead
         Lead updatedLead = leadRepository.save(existingLead);
-        logger.info("Updated lead: {}", updatedLead);
-        return updatedLead;
+        return leadMapper.leadToLeadDTO(updatedLead);
     }
 
     private void updateLeadProperties(Lead existingLead, Lead leadDetails) {

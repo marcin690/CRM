@@ -10,6 +10,4 @@ import java.util.Set;
 public interface UserMapper {
     UserDTO userToUserDTO(User user);
     User userDTOtoUser(UserDTO userDTO);
-
-
 }
