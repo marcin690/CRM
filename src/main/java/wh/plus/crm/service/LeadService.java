@@ -32,6 +32,9 @@ public class LeadService {
     private final EntityManager entityManager; // Dodane
     private final ContactInfoRepository contactInfoRepository;
     private final LeadMapper leadMapper;
+    private final UserService userService;
+
+
 
     public List<LeadDTO> findAll() {
        return leadRepository.findAll().stream().map(leadMapper::leadToLeadDTO).collect(Collectors.toList());
@@ -43,20 +46,51 @@ public class LeadService {
     }
 
     @Transactional
-    public LeadDTO save(LeadDTO leadDTO, String username) {
+    public LeadDTO save(LeadDTO leadDTO) {
         Lead lead = leadMapper.leadDTOtoLead(leadDTO);
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent()) {
-            lead.setCreatedBy(user.get());
-            logger.info("User found: {}", user.get().getUsername());
-            Lead savedLead = leadRepository.save(lead);
-            logger.info("Lead saved with id: {}", savedLead.getId());
-            return leadMapper.leadToLeadDTO(savedLead);
-        } else {
-            logger.error("User not found: {}", username);
-            throw new NoSuchElementException("User not found");
-        }
-    }
+        String username = userService.getCurrentUsername();
+
+         Optional<User> user = userRepository.findByUsername(username);
+         if(user.isPresent()) {
+             lead.setCreatedBy(user.get());
+         } else {
+             throw new NoSuchElementException("User not found");
+         }
+
+         if(leadDTO.getLeadStatus() != null){
+            LeadStatus leadStatus = leadStatusRepository.findById(leadDTO.getLeadStatus())
+                    .orElseThrow(() -> new NoSuchElementException("LeadStatus not found"));
+            lead.setLeadStatus(leadStatus);
+         }
+
+         if(leadDTO.getLeadSource() != null){
+             LeadSource leadSource = leadSourceRepository.findById(leadDTO.getLeadSource())
+                     .orElseThrow(() -> new NoSuchElementException("Lead Source not found"));
+             lead.setLeadSource(leadSource);
+         }
+
+         if(leadDTO.getContactInfo() != null){
+             ContactInfo contactInfo = contactInfoRepository.findById(leadDTO.getContactInfo())
+                     .orElseThrow(() -> new NoSuchElementException("Contact info not found"));
+             lead.setContactInfo(contactInfo);
+         }
+
+         if(leadDTO.getAssignTo() != null) {
+             User assignedUser = userRepository.findById(leadDTO.getAssignTo())
+                     .orElseThrow(() -> new NoSuchElementException("User not fund"));
+             lead.setAssignTo(assignedUser);
+
+         }
+
+         Lead savedLead = leadRepository.save(lead);
+         logger.info("Lead saved with id: {}",savedLead.getId());
+         return leadMapper.leadToLeadDTO(savedLead);
+
+
+
+
+   }
+
 
     @Transactional
     public LeadDTO update(Long id, LeadDTO leadDetailsDTO) {
@@ -64,15 +98,24 @@ public class LeadService {
         Lead existingLead = leadRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
+        if (leadDetailsDTO.getAssignTo() != null) {
+            User assignedUser = userRepository.getReferenceById(leadDetailsDTO.getAssignTo());
+            existingLead.setAssignTo(assignedUser);
+        }
+        if (leadDetailsDTO.getLeadStatus() != null ) {
+            LeadStatus leadStatus = leadStatusRepository.getReferenceById(leadDetailsDTO.getLeadStatus());
+            existingLead.setLeadStatus(leadStatus);
+        }
+        if (leadDetailsDTO.getLeadSource() != null ) {
+            LeadSource leadSource = leadSourceRepository.getReferenceById(leadDetailsDTO.getLeadSource());
+            existingLead.setLeadSource(leadSource);
+        }
+        if (leadDetailsDTO.getContactInfo() != null) {
+            ContactInfo newContactInfo = contactInfoRepository.getReferenceById(leadDetailsDTO.getContactInfo());
+            existingLead.setContactInfo(newContactInfo);
+        }
+
         Lead leadDetails = leadMapper.leadDTOtoLead(leadDetailsDTO);
-        updateLeadProperties(existingLead, leadDetails);
-
-        Lead updatedLead = leadRepository.save(existingLead);
-        return leadMapper.leadToLeadDTO(updatedLead);
-    }
-
-    private void updateLeadProperties(Lead existingLead, Lead leadDetails) {
-        logger.info("Starting updateLeadProperties");
 
         if (leadDetails.getName() != null) {
             existingLead.setName(leadDetails.getName());
@@ -92,28 +135,9 @@ public class LeadService {
         if (leadDetails.getExecutionDate() != null) {
             existingLead.setExecutionDate(leadDetails.getExecutionDate());
         }
-        if (leadDetails.getLeadStatus() != null) {
-            LeadStatus leadStatus = leadStatusRepository.findById(leadDetails.getLeadStatus().getId())
-                    .orElseThrow(() -> new NoSuchElementException("LeadStatus not found"));
-            existingLead.setLeadStatus(leadStatus);
-        }
-        if (leadDetails.getLeadSource() != null) {
-            LeadSource leadSource = leadSourceRepository.findById(leadDetails.getLeadSource().getId())
-                    .orElseThrow(() -> new NoSuchElementException("LeadSource not found"));
-            existingLead.setLeadSource(leadSource);
-        }
-        if (leadDetails.getContactInfo() != null && leadDetails.getContactInfo().getId() != null) {
-            ContactInfo newContactInfo = contactInfoRepository.findById(leadDetails.getContactInfo().getId())
-                    .orElseThrow(() -> new NoSuchElementException("ContactInfo not found"));
-            existingLead.setContactInfo(newContactInfo);
-        }
-        if (leadDetails.getAssignTo() != null && leadDetails.getAssignTo().getId() != null) {
-            User assignedUser = userRepository.findById(leadDetails.getAssignTo().getId())
-                    .orElseThrow(() -> new NoSuchElementException("User not found"));
-            existingLead.setAssignTo(assignedUser);
-        }
 
-        logger.info("Finished updateLeadProperties");
+        Lead updatedLead = leadRepository.save(existingLead);
+        return leadMapper.leadToLeadDTO(updatedLead);
     }
 
 

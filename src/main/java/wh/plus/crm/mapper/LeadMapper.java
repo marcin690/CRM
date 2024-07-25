@@ -7,6 +7,7 @@ import wh.plus.crm.model.lead.Lead;
 @Mapper(componentModel = "spring")
 public interface LeadMapper {
 
+    @Mapping(target = "id", source = "id")
     @Mapping(source = "createdBy.id", target = "createdBy")
     @Mapping(source = "assignTo.id", target = "assignTo")
     @Mapping(source = "leadStatus.id", target = "leadStatus")
@@ -14,10 +15,11 @@ public interface LeadMapper {
     @Mapping(source = "leadSource.id", target = "leadSource")
     LeadDTO leadToLeadDTO(Lead lead);
 
-    @Mapping(target = "createdBy.id", source = "createdBy")
-    @Mapping(target = "assignTo.id", source = "assignTo")
-    @Mapping(target = "leadStatus.id", source = "leadStatus")
-    @Mapping(target = "contactInfo.id", source = "contactInfo")
-    @Mapping(target = "leadSource.id", source = "leadSource")
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "createdBy", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
+    @Mapping(target = "assignTo", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
+    @Mapping(target = "leadStatus", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
+    @Mapping(target = "contactInfo", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
+    @Mapping(target = "leadSource", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
     Lead leadDTOtoLead(LeadDTO leadDTO);
 }

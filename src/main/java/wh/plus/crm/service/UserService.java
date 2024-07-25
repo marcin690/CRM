@@ -2,6 +2,7 @@ package wh.plus.crm.service;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,7 +30,7 @@ public class UserService implements UserDetailsService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final LeadRepository leadRepository;
+
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -51,6 +52,15 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll().stream()
                 .map(userMapper::userToUserDTO)
                 .collect(Collectors.toList());
+    }
+
+    public String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
     }
 
 

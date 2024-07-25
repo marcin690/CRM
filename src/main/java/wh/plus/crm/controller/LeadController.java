@@ -7,24 +7,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import wh.plus.crm.dto.LeadDTO;
-import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.service.LeadService;
-
 import java.util.List;
 import java.util.Optional;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import wh.plus.crm.model.lead.Lead;
-import wh.plus.crm.service.LeadService;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/leads")
@@ -50,16 +37,16 @@ public class LeadController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<LeadDTO> createLead(@RequestBody LeadDTO leadDTO, Authentication authentication) {
         String username = authentication.getName();
-        LeadDTO createdLead = leadService.save(leadDTO, username);
+        LeadDTO createdLead = leadService.save(leadDTO);
         return new ResponseEntity<>(createdLead, HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<LeadDTO> updateLead(@PathVariable Long id, @RequestBody LeadDTO lead) {
-        LeadDTO updatedLead = leadService.update(id, lead);
+        lead.setId(id); // Ustaw ID w LeadDTO
+        LeadDTO updatedLead = leadService.update(id, lead); // Użyj metody update do aktualizacji
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
-
 
 }

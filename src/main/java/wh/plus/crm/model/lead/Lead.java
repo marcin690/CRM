@@ -40,7 +40,7 @@ public class Lead {
     @CreatedBy
     @ManyToOne
     @JoinColumn(name = "created_by_id", nullable = false)
-    @JsonIgnoreProperties({"assignedLeads", "roles","username", "password", "email", "fullname", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
+    @JsonIgnoreProperties({"assignedLeads", "roles", "username", "password", "email", "fullname", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
     private User createdBy;
 
     @ManyToOne
@@ -48,7 +48,7 @@ public class Lead {
     @JsonIgnoreProperties({"assignedLeads", "createdBy", "roles"})
     private User assignTo;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "lead_status_id")
     private LeadStatus leadStatus;
 
@@ -63,11 +63,11 @@ public class Lead {
 
     private String leadRejectedReasonComment;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "contact_info_id")
     private ContactInfo contactInfo;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "lead_source_id")
     private LeadSource leadSource;
 
