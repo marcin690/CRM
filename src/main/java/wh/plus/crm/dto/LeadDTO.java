@@ -3,6 +3,8 @@ package wh.plus.crm.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import wh.plus.crm.model.contactInfo.ContactInfo;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -23,7 +25,7 @@ public class LeadDTO {
     private LocalDateTime executionDate;
     private String description;
     private String leadRejectedReasonComment;
-    private Long contactInfo;
+    private ContactInfo contactInfo;
     private Long leadSource;
 
 }

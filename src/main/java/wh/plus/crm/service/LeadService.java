@@ -69,11 +69,13 @@ public class LeadService {
              lead.setLeadSource(leadSource);
          }
 
-         if(leadDTO.getContactInfo() != null){
-             ContactInfo contactInfo = contactInfoRepository.findById(leadDTO.getContactInfo())
-                     .orElseThrow(() -> new NoSuchElementException("Contact info not found"));
-             lead.setContactInfo(contactInfo);
-         }
+        if (leadDTO.getContactInfo() != null && leadDTO.getContactInfo().getId() != null) {
+            ContactInfo contactInfo = contactInfoRepository.findById(leadDTO.getContactInfo().getId())
+                    .orElseThrow(() -> new NoSuchElementException("Contact info not found"));
+            lead.setContactInfo(contactInfo);
+        } else {
+            lead.setContactInfo(leadDTO.getContactInfo());
+        }
 
          if(leadDTO.getAssignTo() != null) {
              User assignedUser = userRepository.findById(leadDTO.getAssignTo())
@@ -110,12 +112,21 @@ public class LeadService {
             LeadSource leadSource = leadSourceRepository.getReferenceById(leadDetailsDTO.getLeadSource());
             existingLead.setLeadSource(leadSource);
         }
+
+
         if (leadDetailsDTO.getContactInfo() != null) {
-            ContactInfo newContactInfo = contactInfoRepository.getReferenceById(leadDetailsDTO.getContactInfo());
+            ContactInfo newContactInfo = contactInfoRepository.findById(leadDetailsDTO.getContactInfo().getId())
+                    .orElseThrow(() -> new NoSuchElementException("Contact info not found"));
             existingLead.setContactInfo(newContactInfo);
+        } else {
+            existingLead.setContactInfo(leadDetailsDTO.getContactInfo());
         }
 
+
+
         Lead leadDetails = leadMapper.leadDTOtoLead(leadDetailsDTO);
+
+
 
         if (leadDetails.getName() != null) {
             existingLead.setName(leadDetails.getName());
@@ -140,7 +151,20 @@ public class LeadService {
         return leadMapper.leadToLeadDTO(updatedLead);
     }
 
+    @Transactional
+    public void deleteLead(List<Long> ids) {
 
+        for (Long id : ids) {
+            Lead lead = leadRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Lead not found"));
+            lead.setContactInfo(null); // Odłącz powiązanie z ContactInfo
+            lead.setAssignTo(null); // Odłącz powiązanie z ContactInfo
+            lead.setLeadStatus(null);
+            lead.setLeadSource(null);
 
+            leadRepository.save(lead); // Zapisz zmiany, aby zaktualizować bazę danych
+        }
 
+        leadRepository.deleteAllById(ids);
+    }
 }

@@ -35,4 +35,6 @@ public class ContactInfo {
     private Long clientPhone, vatNumber;
 
     private boolean isClient;
+
+
 }

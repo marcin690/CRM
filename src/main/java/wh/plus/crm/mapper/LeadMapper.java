@@ -11,7 +11,7 @@ public interface LeadMapper {
     @Mapping(source = "createdBy.id", target = "createdBy")
     @Mapping(source = "assignTo.id", target = "assignTo")
     @Mapping(source = "leadStatus.id", target = "leadStatus")
-    @Mapping(source = "contactInfo.id", target = "contactInfo")
+    @Mapping(source = "contactInfo", target = "contactInfo")
     @Mapping(source = "leadSource.id", target = "leadSource")
     LeadDTO leadToLeadDTO(Lead lead);
 

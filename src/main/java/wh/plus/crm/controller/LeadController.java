@@ -49,4 +49,12 @@ public class LeadController {
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
 
+    @DeleteMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<LeadDTO> deleteLead(@RequestBody List<Long> ids){
+        leadService.deleteLead(ids);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }
