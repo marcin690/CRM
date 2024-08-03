@@ -1,8 +1,11 @@
 package wh.plus.crm.service;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import wh.plus.crm.config.auditor.AuditorAwareImpl;
 import wh.plus.crm.dto.ContactInfoDTO;
 import wh.plus.crm.mapper.ContactInfoMapper;
 import wh.plus.crm.model.contactInfo.ContactInfo;
@@ -21,6 +24,8 @@ public class ContactInfoService {
     @Autowired
     private ContactInfoMapper contactInfoMapper;
 
+    private static final Logger logger = LoggerFactory.getLogger(ContactInfoService.class);
+
     @Transactional
     public ContactInfoDTO createContactInfo(ContactInfoDTO contactInfoDTO) {
         ContactInfo contactInfo = contactInfoMapper.toEntity(contactInfoDTO);
@@ -28,15 +33,52 @@ public class ContactInfoService {
         return contactInfoMapper.toDTO(savedContactInfo);
     }
 
-    @Transactional
-    public ContactInfoDTO updateContactInfo(Long id, ContactInfoDTO contactInfoDTO){
-        ContactInfo contactInfo = contactInfoRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Contact info not found"));
 
-        contactInfoMapper.updateEntity(contactInfoDTO, contactInfo); // Poprawiona linia
+    @Transactional
+    public ContactInfoDTO updateContactInfo(Long id, ContactInfoDTO contactInfoDTO) {
+        logger.debug("Starting updateContactInfo for id: {}", id);
+
+        // Log the incoming DTO
+        logger.debug("Incoming DTO: {}", contactInfoDTO);
+
+        ContactInfo contactInfo = contactInfoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Contact info not found for id: " + id));
+
+        // Log the existing entity before update
+        logger.debug("Existing entity before update: {}", contactInfo);
+//
+//        // Ręczna aktualizacja pól
+//        contactInfo.setFullName(contactInfoDTO.getFullName());
+//        contactInfo.setClientBusinessName(contactInfoDTO.getClientBusinessName());
+//        contactInfo.setClientAdress(contactInfoDTO.getClientAdress());
+//        contactInfo.setClientCity(contactInfoDTO.getClientCity());
+//        contactInfo.setClientState(contactInfoDTO.getClientState());
+//        contactInfo.setClientZip(contactInfoDTO.getClientZip());
+//        contactInfo.setClientCountry(contactInfoDTO.getClientCountry());
+//        contactInfo.setClientEmail(contactInfoDTO.getClientEmail());
+//        contactInfo.setClientPhone(contactInfoDTO.getClientPhone());
+//        contactInfo.setVatNumber(contactInfoDTO.getVatNumber());
+//        contactInfo.setClient(contactInfoDTO.isClient());
+
+            contactInfoMapper.updateEntity(contactInfoDTO, contactInfo);
+
+        // Log the entity after update
+        logger.debug("Entity after manual update: {}", contactInfo);
+
         ContactInfo updatedContactInfo = contactInfoRepository.save(contactInfo);
-        return contactInfoMapper.toDTO(updatedContactInfo);
+
+        // Log the saved entity
+        logger.debug("Entity after save: {}", updatedContactInfo);
+
+        ContactInfoDTO updatedContactInfoDTO = contactInfoMapper.toDTO(updatedContactInfo);
+
+        // Log the outgoing DTO
+        logger.debug("Outgoing DTO: {}", updatedContactInfoDTO);
+
+        return updatedContactInfoDTO;
     }
+
+
 
     @Transactional
     public ContactInfoDTO getContactInfo(Long id) {
