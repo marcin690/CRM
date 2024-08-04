@@ -44,36 +44,12 @@ public class ContactInfoService {
         ContactInfo contactInfo = contactInfoRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Contact info not found for id: " + id));
 
-        // Log the existing entity before update
-        logger.debug("Existing entity before update: {}", contactInfo);
-//
-//        // Ręczna aktualizacja pól
-//        contactInfo.setFullName(contactInfoDTO.getFullName());
-//        contactInfo.setClientBusinessName(contactInfoDTO.getClientBusinessName());
-//        contactInfo.setClientAdress(contactInfoDTO.getClientAdress());
-//        contactInfo.setClientCity(contactInfoDTO.getClientCity());
-//        contactInfo.setClientState(contactInfoDTO.getClientState());
-//        contactInfo.setClientZip(contactInfoDTO.getClientZip());
-//        contactInfo.setClientCountry(contactInfoDTO.getClientCountry());
-//        contactInfo.setClientEmail(contactInfoDTO.getClientEmail());
-//        contactInfo.setClientPhone(contactInfoDTO.getClientPhone());
-//        contactInfo.setVatNumber(contactInfoDTO.getVatNumber());
-//        contactInfo.setClient(contactInfoDTO.isClient());
-
-            contactInfoMapper.updateEntity(contactInfoDTO, contactInfo);
-
-        // Log the entity after update
-        logger.debug("Entity after manual update: {}", contactInfo);
+        contactInfoMapper.updateEntity(contactInfoDTO, contactInfo);
 
         ContactInfo updatedContactInfo = contactInfoRepository.save(contactInfo);
 
-        // Log the saved entity
-        logger.debug("Entity after save: {}", updatedContactInfo);
-
         ContactInfoDTO updatedContactInfoDTO = contactInfoMapper.toDTO(updatedContactInfo);
 
-        // Log the outgoing DTO
-        logger.debug("Outgoing DTO: {}", updatedContactInfoDTO);
 
         return updatedContactInfoDTO;
     }
