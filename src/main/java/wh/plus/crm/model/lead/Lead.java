@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.User;
 import wh.plus.crm.model.contactInfo.ContactInfo;
 
@@ -24,7 +25,7 @@ import java.time.LocalDateTime;
 @EnableJpaAuditing
 
 
-public class Lead {
+public class Lead extends Auditable<String> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,17 +34,6 @@ public class Lead {
     @Version
     private int version;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
-
-    @CreatedBy
-    @ManyToOne
-    @JoinColumn(name = "created_by_id", nullable = false)
-    @JsonIgnoreProperties({"assignedLeads", "roles", "username", "password", "email", "fullname", "phone", "roles", "leads", "enabled", "authorities", "accountNonExpired", "accountNonLocked", "credentialsNonExpired"})
-    private User createdBy;
 
     @ManyToOne
     @JoinColumn(name = "assign_to_id")

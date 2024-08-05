@@ -8,7 +8,7 @@ import wh.plus.crm.model.lead.Lead;
 public interface LeadMapper {
 
     @Mapping(target = "id", source = "id")
-    @Mapping(source = "createdBy.id", target = "createdBy")
+//    @Mapping(source = "createdBy.id", target = "createdBy")
     @Mapping(source = "assignTo.id", target = "assignTo")
     @Mapping(source = "leadStatus.id", target = "leadStatus")
     @Mapping(source = "contactInfo", target = "contactInfo")
@@ -16,7 +16,7 @@ public interface LeadMapper {
     LeadDTO leadToLeadDTO(Lead lead);
 
     @Mapping(target = "id", source = "id")
-    @Mapping(target = "createdBy", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
+//    @Mapping(target = "createdBy", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
     @Mapping(target = "assignTo", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
     @Mapping(target = "leadStatus", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead
     @Mapping(target = "contactInfo", ignore = true) // Ignoruj pełne obiekty podczas mapowania DTO na Lead

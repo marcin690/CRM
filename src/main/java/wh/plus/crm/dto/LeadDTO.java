@@ -14,9 +14,7 @@ public class LeadDTO {
 
     private Long id;
     private int version;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Long createdBy;
+
     private Long assignTo;
     private Long leadStatus;
     private String name;

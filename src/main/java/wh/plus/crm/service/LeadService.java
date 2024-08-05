@@ -5,8 +5,11 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.LeadDTO;
+import wh.plus.crm.events.EntityCreatedEvent;
 import wh.plus.crm.mapper.LeadMapper;
 import wh.plus.crm.model.contactInfo.ContactInfo;
 import wh.plus.crm.model.lead.Lead;
@@ -29,10 +32,13 @@ public class LeadService {
     private final UserRepository userRepository;
     private final LeadStatusRepository leadStatusRepository;
     private final LeadSourceRepository leadSourceRepository;
-    private final EntityManager entityManager; // Dodane
+
     private final ContactInfoRepository contactInfoRepository;
     private final LeadMapper leadMapper;
     private final UserService userService;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
 
 
@@ -50,12 +56,12 @@ public class LeadService {
         Lead lead = leadMapper.leadDTOtoLead(leadDTO);
         String username = userService.getCurrentUsername();
 
-         Optional<User> user = userRepository.findByUsername(username);
-         if(user.isPresent()) {
-             lead.setCreatedBy(user.get());
-         } else {
-             throw new NoSuchElementException("User not found");
-         }
+//         Optional<User> user = userRepository.findByUsername(username);
+//         if(user.isPresent()) {
+//             lead.setCreatedBy(user.get());
+//         } else {
+//             throw new NoSuchElementException("User not found");
+//         }
 
          if(leadDTO.getLeadStatus() != null){
             LeadStatus leadStatus = leadStatusRepository.findById(leadDTO.getLeadStatus())
@@ -85,7 +91,12 @@ public class LeadService {
          }
 
          Lead savedLead = leadRepository.save(lead);
-         logger.info("Lead saved with id: {}",savedLead.getId());
+
+        String message = String.format("Użytkownik %s dodał lead o nazwie %s", username, savedLead.getName());
+        applicationEventPublisher.publishEvent(new EntityCreatedEvent<>(this, savedLead, message));
+
+
+
          return leadMapper.leadToLeadDTO(savedLead);
 
 
