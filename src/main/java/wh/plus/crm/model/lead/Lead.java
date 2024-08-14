@@ -37,7 +37,7 @@ public class Lead extends Auditable<String> {
 
     @ManyToOne
     @JoinColumn(name = "assign_to_id")
-    @JsonIgnoreProperties({"assignedLeads", "createdBy", "roles"})
+
     private User assignTo;
 
     @ManyToOne(cascade = CascadeType.ALL)

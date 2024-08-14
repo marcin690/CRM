@@ -18,6 +18,11 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIgnoreProperties({
+        "password", "roles", "authorities", "phone",
+        "enabled", "salesRepresentative", "accountNonExpired",
+        "accountNonLocked", "credentialsNonExpired"
+})
 public class User implements UserDetails {
 
     @Id
