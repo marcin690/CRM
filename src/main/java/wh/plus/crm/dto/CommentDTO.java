@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommentDTO {
     private Long id;
-    private Long globalId;
+    private String clientId;
     private String content;
     private CommentType commentType;
     private EntityType entityType;

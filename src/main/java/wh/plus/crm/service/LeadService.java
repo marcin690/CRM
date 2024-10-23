@@ -2,6 +2,8 @@ package wh.plus.crm.service;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,8 @@ import wh.plus.crm.dto.LeadDTO;
 import wh.plus.crm.mapper.LeadMapper;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.repository.LeadRepository;
+import wh.plus.crm.repository.LeadSourceRepository;
+import wh.plus.crm.repository.LeadStatusRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -22,7 +26,9 @@ public class LeadService {
     private static final Logger logger = LoggerFactory.getLogger(LeadService.class);
 
     private final LeadRepository leadRepository;
+    private final LeadStatusRepository leadStatusRepository;
     private final LeadMapper leadMapper;
+    private final LeadSourceRepository leadSourceRepository;
 
     @Transactional
     public List<LeadDTO> findAll() {
@@ -40,7 +46,7 @@ public class LeadService {
 
     @Transactional
     public LeadDTO save(LeadDTO leadDTO) {
-        Lead lead = leadMapper.leadDTOtoLead(leadDTO);
+        Lead lead = leadMapper.leadDTOtoLead(leadDTO,leadStatusRepository);
         Lead savedLead = leadRepository.save(lead);
         return leadMapper.leadToLeadDTO(savedLead);
     }
@@ -51,9 +57,14 @@ public class LeadService {
         Lead existingLead = leadRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
-        leadMapper.updateLeadFromDto(leadDetailsDTO, existingLead);
+        leadMapper.updateLeadFromDto(leadDetailsDTO, existingLead, leadStatusRepository, leadSourceRepository);
         Lead updatedLead = leadRepository.save(existingLead);
         return leadMapper.leadToLeadDTO(updatedLead);
+    }
+
+    public Page<LeadDTO> getLeads(Pageable pageable){
+        return leadRepository.findAll(pageable)
+                .map(lead -> leadMapper.leadToLeadDTO(lead));
     }
 
     @Transactional
@@ -61,7 +72,6 @@ public class LeadService {
         for (Long id : ids) {
             Lead lead = leadRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Lead not found"));
-            lead.setContactInfo(null);
             lead.setAssignTo(null);
             lead.setLeadStatus(null);
             lead.setLeadSource(null);

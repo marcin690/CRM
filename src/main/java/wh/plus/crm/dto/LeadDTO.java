@@ -16,18 +16,22 @@ import java.time.LocalDateTime;
 public class LeadDTO {
 
     private Long id;
+    private String clientId;
     private int version;
 
     private User assignTo;
-    private LeadStatus leadStatus;
+    private Long leadStatusId;
     private String name;
     private Long leadValue;
     private Long roomsQuantity;
     private LocalDateTime executionDate;
     private String description;
     private String leadRejectedReasonComment;
-    private ContactInfo contactInfo;
-    private LeadSource leadSource;
+    private Long leadSourceId;
+
+    private String clientFullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
+
+    private Long clientPhone, vatNumber;
 
     private String createdBy;
     private String lastModifiedBy;

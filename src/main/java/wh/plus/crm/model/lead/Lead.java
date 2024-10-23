@@ -3,14 +3,14 @@ package wh.plus.crm.model.lead;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import wh.plus.crm.helper.GenerateTemporaryClientId;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.User;
-import wh.plus.crm.model.contactInfo.ContactInfo;
+import wh.plus.crm.model.common.HasClientId;
+import org.hibernate.envers.Audited;
 
 import java.time.LocalDateTime;
 
@@ -23,13 +23,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
-
-
-public class Lead extends Auditable<String> {
+@Audited
+public class Lead extends Auditable<String> implements HasClientId {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+
+
+    @Column(unique = true)
+    @Setter(AccessLevel.NONE)
+    private final String clientId = new GenerateTemporaryClientId().generateTemporaryClientId();
+
 
     @Version
     private int version;
@@ -37,11 +43,12 @@ public class Lead extends Auditable<String> {
 
     @ManyToOne
     @JoinColumn(name = "assign_to_id")
-
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User assignTo;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne()
     @JoinColumn(name = "lead_status_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private LeadStatus leadStatus;
 
     private String name;
@@ -55,12 +62,20 @@ public class Lead extends Auditable<String> {
 
     private String leadRejectedReasonComment;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "contact_info_id")
-    private ContactInfo contactInfo;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "lead_source_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private LeadSource leadSource;
+
+    private String clientFullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
+
+    private Long clientPhone, vatNumber;
+
+    @Override
+    public String getClientId() {
+        return clientId;
+    }
+
 
 }

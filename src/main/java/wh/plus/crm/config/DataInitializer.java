@@ -15,6 +15,7 @@ import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.RoleRepository;
 import wh.plus.crm.model.lead.LeadStatus.StatusType;
 import wh.plus.crm.repository.UserRepository;
+import wh.plus.crm.service.LeadFactoryService;
 
 
 import java.util.*;
@@ -28,6 +29,7 @@ public class DataInitializer {
     private final LeadSourceRepository leadSourceRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LeadFactoryService leadFactoryService;
 
     @PostConstruct
     @Transactional
@@ -36,6 +38,14 @@ public class DataInitializer {
         initializeLeadStatuses();
         initializeLeadSource();
         initializeAdminUser();
+//        initializeLeadsRecords();
+
+    }
+
+
+    private void initializeLeadsRecords() {
+
+        leadFactoryService.generateLeads(150);
 
     }
 

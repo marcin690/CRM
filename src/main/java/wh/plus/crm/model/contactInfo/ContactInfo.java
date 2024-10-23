@@ -32,7 +32,7 @@ public class ContactInfo extends Auditable<String> {
     private int version;
 
 
-    private String fullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
+    private String clientFullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
 
     private Long clientPhone, vatNumber;
 

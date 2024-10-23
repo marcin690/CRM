@@ -20,7 +20,7 @@ public class Comment extends Auditable<String> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long globalId;
+
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +36,11 @@ public class Comment extends Auditable<String> {
     @JoinColumn(name = "lead_id", nullable = true)
     private Lead lead;
 
+    public void setClientFromLead(String clientId){
+        this.clientId = clientId;
+    }
+
+
 
 //    @ManyToOne
 //    @JoinColumn(name = "offer_id", nullable = true)
@@ -48,6 +53,8 @@ public class Comment extends Auditable<String> {
 //    @ManyToOne
 //    @JoinColumn(name = "contract_id", nullable = true)
 //    private Contract contract;
+
+
 
 
 
