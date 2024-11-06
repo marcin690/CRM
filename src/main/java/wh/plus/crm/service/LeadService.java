@@ -3,9 +3,11 @@ package wh.plus.crm.service;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.LeadDTO;
 import wh.plus.crm.mapper.LeadMapper;
@@ -14,6 +16,9 @@ import wh.plus.crm.repository.LeadRepository;
 import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -62,9 +67,16 @@ public class LeadService {
         return leadMapper.leadToLeadDTO(updatedLead);
     }
 
-    public Page<LeadDTO> getLeads(Pageable pageable){
-        return leadRepository.findAll(pageable)
-                .map(lead -> leadMapper.leadToLeadDTO(lead));
+    public Page<LeadDTO> getLeads(Pageable pageable, LocalDateTime fromDate, LocalDateTime toDate, String employee, Long status, String search ){
+        logger.debug("Parametry wejściowe - fromDate: {}, toDate: {}, employee: {}, status: {}, search: {}", fromDate, toDate, employee, status, search);
+
+        if(fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
+           Pageable defaultPageable = PageRequest.of(pageable.getPageNumber(), 25, pageable.getSort().and(Sort.by("creationDate")));
+           return leadRepository.findAll(defaultPageable).map(leadMapper::leadToLeadDTO);
+        }
+
+        Page<Lead> filteredLeads = leadRepository.findLeadsByCriteria(pageable, fromDate, toDate, employee, status, search);
+        return filteredLeads.map(leadMapper::leadToLeadDTO);
     }
 
     @Transactional

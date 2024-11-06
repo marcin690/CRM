@@ -1,7 +1,6 @@
 package wh.plus.crm.model;
 
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
@@ -23,12 +22,14 @@ public class Auditable<T> {
     protected T createdBy;
 
     @CreatedDate
+    @Column(name = "creation_date", columnDefinition = "TIMESTAMP")
     protected LocalDateTime creationDate;
 
     @LastModifiedBy
     protected T lastModifiedBy;
 
     @LastModifiedDate
+    @Column(name = "last_modified_date", columnDefinition = "TIMESTAMP")
     protected LocalDateTime lastModifiedDate;
 
     protected String clientId;

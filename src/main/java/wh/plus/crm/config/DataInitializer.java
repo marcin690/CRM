@@ -38,14 +38,14 @@ public class DataInitializer {
         initializeLeadStatuses();
         initializeLeadSource();
         initializeAdminUser();
-//        initializeLeadsRecords();
+//     initializeLeadsRecords();
 
     }
 
 
     private void initializeLeadsRecords() {
 
-        leadFactoryService.generateLeads(150);
+        leadFactoryService.generateLeads(50);
 
     }
 

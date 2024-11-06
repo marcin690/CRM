@@ -56,7 +56,7 @@ public class Lead extends Auditable<String> implements HasClientId {
 
     private LocalDateTime executionDate;
 
-    @Lob
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

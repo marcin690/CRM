@@ -1,6 +1,13 @@
 package wh.plus.crm.controller;
 
+import org.springframework.data.domain.Page;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import wh.plus.crm.dto.LeadDTO;
 import wh.plus.crm.service.LeadService;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,9 +30,18 @@ public class LeadController {
     private LeadService leadService;
 
     @GetMapping
-    public ResponseEntity<List<LeadDTO>> findAll() {
-        List<LeadDTO> leads = leadService.findAll();
-        return new ResponseEntity<>(leads, HttpStatus.OK);
+    public ResponseEntity<PagedModel<EntityModel<LeadDTO>>> findAll(
+            Pageable pageable,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime fromDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime toDate,
+            @RequestParam(required = false) String employee,
+            @RequestParam(required = false) Long status,
+            @RequestParam(required = false) String search,
+            PagedResourcesAssembler<LeadDTO> assembler
+    ) {
+        Page<LeadDTO> leads = leadService.getLeads(pageable, fromDate, toDate, employee, status, search);
+        PagedModel<EntityModel<LeadDTO>> pagedModel = assembler.toModel(leads);
+        return new ResponseEntity<>(pagedModel, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
