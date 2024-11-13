@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import wh.plus.crm.model.comment.EntityType;
 
 import java.time.LocalDateTime;
 

@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wh.plus.crm.model.comment.CommentType;
-import wh.plus.crm.model.comment.EntityType;
+import wh.plus.crm.model.EntityType;
 
 import java.time.LocalDateTime;
 

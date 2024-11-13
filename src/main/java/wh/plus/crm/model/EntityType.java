@@ -1,8 +1,9 @@
-package wh.plus.crm.model.comment;
+package wh.plus.crm.model;
 
 public enum EntityType {
     LEAD,
     OFFER,
     PROJECT,
-    CONTRACT
+    CONTRACT,
+    CLIENT
 }

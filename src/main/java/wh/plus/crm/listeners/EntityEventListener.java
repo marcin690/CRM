@@ -6,15 +6,13 @@ import org.springframework.stereotype.Component;
 import wh.plus.crm.events.EntityCreatedEvent;
 import wh.plus.crm.model.Notification;
 import wh.plus.crm.model.User;
-import wh.plus.crm.model.comment.EntityType;
+import wh.plus.crm.model.EntityType;
 import wh.plus.crm.repository.NotificationRepository;
 import wh.plus.crm.repository.UserRepository;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
-import java.util.NoSuchElementException;
 
 @Component
 public class EntityEventListener {

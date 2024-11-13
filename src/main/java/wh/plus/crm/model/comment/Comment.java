@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wh.plus.crm.model.Auditable;
+import wh.plus.crm.model.EntityType;
 import wh.plus.crm.model.lead.Lead;
 
 @Entity
@@ -40,8 +41,6 @@ public class Comment extends Auditable<String> {
         this.clientId = clientId;
     }
 
-
-
 //    @ManyToOne
 //    @JoinColumn(name = "offer_id", nullable = true)
 //    private Offer offer;
@@ -53,14 +52,6 @@ public class Comment extends Auditable<String> {
 //    @ManyToOne
 //    @JoinColumn(name = "contract_id", nullable = true)
 //    private Contract contract;
-
-
-
-
-
-
-
-
 
 
 }
