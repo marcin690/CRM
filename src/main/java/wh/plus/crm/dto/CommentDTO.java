@@ -3,7 +3,7 @@ package wh.plus.crm.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import wh.plus.crm.model.comment.CommentType;
+import wh.plus.crm.model.CommentSentiment;
 import wh.plus.crm.model.EntityType;
 
 import java.time.LocalDateTime;
@@ -15,7 +15,7 @@ public class CommentDTO {
     private Long id;
     private String clientId;
     private String content;
-    private CommentType commentType;
+    private CommentSentiment commentSentiment;
     private EntityType entityType;
 
 

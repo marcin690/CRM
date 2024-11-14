@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wh.plus.crm.model.User;
-import wh.plus.crm.model.contactInfo.ContactInfo;
+
 import wh.plus.crm.model.lead.LeadSource;
 import wh.plus.crm.model.lead.LeadStatus;
 

@@ -6,11 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wh.plus.crm.model.Auditable;
+import wh.plus.crm.model.CommentSentiment;
 import wh.plus.crm.model.EntityType;
+import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.model.offer.Offer;
+import wh.plus.crm.model.project.Project;
 
 @Entity
-@Table(name = "comment")
+@Table(name = "comments")
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
@@ -25,7 +29,7 @@ public class Comment extends Auditable<String> {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    private CommentType commentType;
+    private CommentSentiment commentSentiment;
 
     @Enumerated(EnumType.STRING)
     private EntityType entityType;
@@ -34,24 +38,25 @@ public class Comment extends Auditable<String> {
 
 
     @ManyToOne
-    @JoinColumn(name = "lead_id", nullable = true)
+    @JoinColumn(name = "lead", nullable = true)
     private Lead lead;
 
-    public void setClientFromLead(String clientId){
+    @ManyToOne
+    @JoinColumn(name = "client", nullable = true)
+    private Client client;
+
+    @ManyToOne
+    @JoinColumn(name = "project", nullable = true)
+    private Project project;
+
+    @ManyToOne
+    @JoinColumn(name = "offer", nullable = true)
+    private Offer offer;
+
+
+    public void setClientFromLead(String clientId) {
         this.clientId = clientId;
     }
-
-//    @ManyToOne
-//    @JoinColumn(name = "offer_id", nullable = true)
-//    private Offer offer;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "project_id", nullable = true)
-//    private Project project;
-//
-//    @ManyToOne
-//    @JoinColumn(name = "contract_id", nullable = true)
-//    private Contract contract;
 
 
 }
