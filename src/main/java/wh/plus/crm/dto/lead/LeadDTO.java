@@ -1,12 +1,9 @@
-package wh.plus.crm.dto;
+package wh.plus.crm.dto.lead;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wh.plus.crm.model.User;
-
-import wh.plus.crm.model.lead.LeadSource;
-import wh.plus.crm.model.lead.LeadStatus;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +15,8 @@ public class LeadDTO {
     private Long id;
     private String clientId;
     private int version;
+
+    private String clientGlobalId;
 
     private User assignTo;
     private Long leadStatusId;

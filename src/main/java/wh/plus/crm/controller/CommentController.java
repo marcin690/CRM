@@ -1,6 +1,9 @@
 package wh.plus.crm.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +31,12 @@ public class CommentController {
         Optional<CommentDTO> commment = Optional.ofNullable(commentService.findCommentById(id));
         return commment.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @GetMapping("/client/{clientGlobalId}")
+    public ResponseEntity<Page<CommentDTO>> getCommentsByClientGlobalId(@PathVariable String clientGlobalId,
+       @PageableDefault(size = 25, sort = "eventDate") Pageable pageable){
+        return ResponseEntity.ok(commentService.findByClientGlobalId(clientGlobalId, pageable));
     }
 
     @PostMapping()

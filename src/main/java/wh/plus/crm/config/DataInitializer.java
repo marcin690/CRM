@@ -38,7 +38,7 @@ public class DataInitializer {
         initializeLeadStatuses();
         initializeLeadSource();
         initializeAdminUser();
-//     initializeLeadsRecords();
+//  initializeLeadsRecords();
 
     }
 

@@ -1,10 +1,16 @@
 package wh.plus.crm.model.offer;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import wh.plus.crm.model.Tax;
 
 @Entity
 @Audited
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class OfferItem {
 
     @Id

@@ -1,7 +1,8 @@
 package wh.plus.crm.mapper;
 
 import org.mapstruct.*;
-import wh.plus.crm.dto.LeadDTO;
+import wh.plus.crm.dto.lead.LeadDTO;
+import wh.plus.crm.dto.lead.LeadSummaryDTO;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
@@ -11,7 +12,7 @@ import java.util.NoSuchElementException;
 @Mapper(componentModel = "spring")
 public interface LeadMapper {
 
-    @Mapping(target = "clientId", ignore = true)
+    @Mapping(target = "clientGlobalId", ignore = true)
     @Mapping(source = "createdBy", target = "createdBy")
     @Mapping(source = "creationDate", target = "creationDate")
     @Mapping(source = "lastModifiedBy", target = "lastModifiedBy")
@@ -20,10 +21,12 @@ public interface LeadMapper {
     @Mapping(target = "leadSource", ignore = true)
     Lead leadDTOtoLead(LeadDTO leadDTO, @Context LeadStatusRepository leadStatusRepository);
 
-    @Mapping(source = "clientId", target = "clientId")
+    @Mapping(source = "clientGlobalId", target = "clientId")
     @Mapping(source = "leadStatus.id", target = "leadStatusId")
     @Mapping(source = "leadSource.id", target = "leadSourceId")
     LeadDTO leadToLeadDTO(Lead lead);
+
+    LeadSummaryDTO toLeadSummaryDTO(Lead lead);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateLeadFromDto(LeadDTO leadDTO, @MappingTarget Lead lead, @Context LeadStatusRepository leadStatusRepository, @Context LeadSourceRepository leadSourceRepository);

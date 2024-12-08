@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import wh.plus.crm.dto.LeadDTO;
+import wh.plus.crm.dto.lead.LeadDTO;
 import wh.plus.crm.mapper.LeadMapper;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.repository.LeadRepository;
@@ -17,8 +17,6 @@ import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;

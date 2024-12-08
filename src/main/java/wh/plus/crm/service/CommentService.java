@@ -3,6 +3,8 @@ package wh.plus.crm.service;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.CommentDTO;
 import wh.plus.crm.mapper.CommentMapper;
@@ -36,10 +38,16 @@ public class CommentService {
     }
 
     @Transactional
+
     public CommentDTO findCommentById(Long id){
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Comments not found"));
         return commentMapper.toDTO(comment);
+    }
+
+    public Page<CommentDTO> findByClientGlobalId(String clientGlobalId, Pageable pageable){
+        Page<Comment> commentPage = commentRepository.findByClientGlobalId(clientGlobalId, pageable);
+        return commentPage.map(commentMapper::toDTO);
     }
 
     @Transactional

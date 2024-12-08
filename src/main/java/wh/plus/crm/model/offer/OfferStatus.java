@@ -8,7 +8,8 @@ public enum OfferStatus {
 
     SENT("Wysłana"),
     ACCEPTED("Zaakceptowana"),
-    REJECTED("Odrzucona");
+    REJECTED("Odrzucona"),
+    SIGNED("Podpisana umowa");
 
     private final String description;
 

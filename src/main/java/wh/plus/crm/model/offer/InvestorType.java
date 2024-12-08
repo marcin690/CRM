@@ -10,7 +10,7 @@ public enum InvestorType {
     CONSTRUCTION_COMPANY_HOTEL("Firma budowlana dla hotelu"),
     CONDO_HOTELS("Condohotele"),
     CONSTRUCTION_COMPANY_PRIVATE("Firma budowlana dla prywatnych"),
-    FOREIGN_TOTAL("Zagranica w sumie"),
+    FOREIGN("Zagranica"),
     SMALL_PRIVATE_INVESTOR("Pryw. inwestor mały"),
     PRIVATE_APARTMENTS("Apart. prywatne");
 

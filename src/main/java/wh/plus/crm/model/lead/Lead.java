@@ -31,11 +31,9 @@ public class Lead extends Auditable<String> implements HasClientId {
     private Long id;
 
 
-
     @Column(unique = true)
     @Setter(AccessLevel.NONE)
-    private final String clientId = new GenerateTemporaryClientId().generateTemporaryClientId();
-
+    private final String clientGlobalId = new GenerateTemporaryClientId().generateTemporaryClientId();
 
     @Version
     private int version;
@@ -56,7 +54,6 @@ public class Lead extends Auditable<String> implements HasClientId {
 
     private LocalDateTime executionDate;
 
-
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -73,8 +70,8 @@ public class Lead extends Auditable<String> implements HasClientId {
     private Long clientPhone, vatNumber;
 
     @Override
-    public String getClientId() {
-        return clientId;
+    public String getClientGlobalId() {
+        return clientGlobalId;
     }
 
 

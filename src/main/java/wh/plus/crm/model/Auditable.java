@@ -8,7 +8,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import wh.plus.crm.model.lead.Lead;
 
 import java.time.LocalDateTime;
 
@@ -32,11 +31,11 @@ public class Auditable<T> {
     @Column(name = "last_modified_date", columnDefinition = "TIMESTAMP")
     protected LocalDateTime lastModifiedDate;
 
-    protected String clientId;
+    protected String clientGlobalId;
 
 
     public void setClientIdFromLead(String clientId) {
-        this.clientId = clientId;
+        this.clientGlobalId = clientId;
     }
 
 

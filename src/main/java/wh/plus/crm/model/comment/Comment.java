@@ -13,6 +13,8 @@ import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.project.Project;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "comments")
 @EntityListeners(AuditingEntityListener.class)
@@ -36,6 +38,8 @@ public class Comment extends Auditable<String> {
 
     private boolean automatic;
 
+    private LocalDateTime eventDate;
+
 
     @ManyToOne
     @JoinColumn(name = "lead", nullable = true)
@@ -53,9 +57,15 @@ public class Comment extends Auditable<String> {
     @JoinColumn(name = "offer", nullable = true)
     private Offer offer;
 
+    // encje do uzupełmnienia
+
+
+    private Long projectStage;
+    private Long production;
+
 
     public void setClientFromLead(String clientId) {
-        this.clientId = clientId;
+        this.clientGlobalId = clientId;
     }
 
 
