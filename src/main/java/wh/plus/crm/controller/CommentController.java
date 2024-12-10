@@ -26,6 +26,14 @@ public class CommentController {
       return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 
+    @GetMapping("/{entityType}/{entityId}/count")
+    public ResponseEntity<Long> countCommentsByEntity(
+            @PathVariable String entityType, @PathVariable Long entityId
+    ){
+        Long count = commentService.countCommentsByEntity(entityType, entityId);
+        return ResponseEntity.ok(count);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CommentDTO> getCommentById(@PathVariable Long id){
         Optional<CommentDTO> commment = Optional.ofNullable(commentService.findCommentById(id));

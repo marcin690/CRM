@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import wh.plus.crm.model.client.Client;
-import wh.plus.crm.model.client.Client;
-import wh.plus.crm.model.common.HasClientId;
 import wh.plus.crm.model.project.Project;
 
 import java.time.LocalDateTime;
@@ -19,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Event extends Auditable<String> implements HasClientId {
+public class Event extends Auditable<String>  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

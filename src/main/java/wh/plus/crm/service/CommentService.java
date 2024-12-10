@@ -14,6 +14,7 @@ import wh.plus.crm.repository.CommentRepository;
 import wh.plus.crm.repository.LeadRepository;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -88,5 +89,20 @@ public class CommentService {
     }
 
 
+    public Long countCommentsByEntity(String entityType, Long entityId) {
+        switch (entityType.toUpperCase()) {
+            case "CLIENT":
+                return commentRepository.countByClientId(entityId);
+            case "OFFER":
+                return commentRepository.countByOfferId(entityId);
+            case "LEAD":
+                return commentRepository.countByLeadId(entityId);
+            case "PROJECT":
+                return commentRepository.countByProjectId(entityId);
+            default:
+                throw new IllegalArgumentException("Nieprawidłowy typ encji: " + entityType);
 
+
+        }
+    }
 }

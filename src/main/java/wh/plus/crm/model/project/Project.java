@@ -7,13 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import wh.plus.crm.dto.ContactDTO;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Contact;
 import wh.plus.crm.model.client.Client;
-import wh.plus.crm.model.common.HasClientId;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -21,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Audited
-public class Project extends Auditable<String> implements HasClientId {
+public class Project extends Auditable<String> {
 
     @Id
     private Long id;

@@ -8,13 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Contact;
 import wh.plus.crm.model.Event;
-import wh.plus.crm.model.common.HasClientId;
 import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.project.Project;
 
@@ -30,7 +28,7 @@ import java.util.List;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
 @Audited
-public class Client extends Auditable<String> implements HasClientId  {
+public class Client extends Auditable<String>   {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

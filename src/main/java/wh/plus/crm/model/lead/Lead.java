@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import wh.plus.crm.helper.GenerateTemporaryClientId;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.User;
-import wh.plus.crm.model.common.HasClientId;
 import org.hibernate.envers.Audited;
 
 import java.time.LocalDateTime;
@@ -24,7 +23,7 @@ import java.time.LocalDateTime;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
 @Audited
-public class Lead extends Auditable<String> implements HasClientId {
+public class Lead extends Auditable<String>  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,8 +31,7 @@ public class Lead extends Auditable<String> implements HasClientId {
 
 
     @Column(unique = true)
-    @Setter(AccessLevel.NONE)
-    private final String clientGlobalId = new GenerateTemporaryClientId().generateTemporaryClientId();
+    private String clientGlobalId;
 
     @Version
     private int version;

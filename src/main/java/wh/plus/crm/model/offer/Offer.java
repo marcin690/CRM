@@ -9,7 +9,6 @@ import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Currency;
 import wh.plus.crm.model.User;
 import wh.plus.crm.model.client.Client;
-import wh.plus.crm.model.common.HasClientId;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.model.project.Project;
 
@@ -23,7 +22,7 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @Audited
-public class Offer extends Auditable<String> implements HasClientId {
+public class Offer extends Auditable<String> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,6 +57,9 @@ public class Offer extends Auditable<String> implements HasClientId {
 
     @Enumerated(EnumType.STRING)
     private ObjectType objectType;
+
+    @Enumerated(EnumType.STRING)
+    private SalesOpportunityLevel salesOpportunityLevel;
 
     @Column(nullable = true, precision = 19, scale = 2)
     private BigDecimal totalPrice;

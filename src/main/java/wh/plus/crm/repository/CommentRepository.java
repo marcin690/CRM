@@ -11,4 +11,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     Page<Comment> findByClientGlobalId(String clientGlobalId, Pageable pageable);
 
+    Long countByLeadId(Long entityId);
+
+    Long countByProjectId(Long entityId);
+
+    Long countByClientId(Long entityId);
+
+    Long countByOfferId(Long entityId);
 }

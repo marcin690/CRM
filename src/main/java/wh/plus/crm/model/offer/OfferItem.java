@@ -1,10 +1,12 @@
 package wh.plus.crm.model.offer;
+import com.sun.istack.NotNull;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import wh.plus.crm.model.Tax;
+
 
 @Entity
 @Audited
@@ -18,6 +20,8 @@ public class OfferItem {
     private Long id;
 
     private String title, description;
+
+    @NotNull
     private Long amount, quantity;
 
     @Enumerated(EnumType.STRING)

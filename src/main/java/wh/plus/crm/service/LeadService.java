@@ -32,6 +32,7 @@ public class LeadService {
     private final LeadStatusRepository leadStatusRepository;
     private final LeadMapper leadMapper;
     private final LeadSourceRepository leadSourceRepository;
+    private final ClientGlobalIdService clientGlobalIdService;
 
     @Transactional
     public List<LeadDTO> findAll() {
@@ -50,6 +51,11 @@ public class LeadService {
     @Transactional
     public LeadDTO save(LeadDTO leadDTO) {
         Lead lead = leadMapper.leadDTOtoLead(leadDTO,leadStatusRepository);
+
+        if(lead.getClientGlobalId() == null || lead.getClientGlobalId().isEmpty()) {
+            lead.setClientGlobalId(clientGlobalIdService.generateClientGlobalId());
+        }
+
         Lead savedLead = leadRepository.save(lead);
         return leadMapper.leadToLeadDTO(savedLead);
     }
@@ -61,6 +67,7 @@ public class LeadService {
                 .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
         leadMapper.updateLeadFromDto(leadDetailsDTO, existingLead, leadStatusRepository, leadSourceRepository);
+
         Lead updatedLead = leadRepository.save(existingLead);
         return leadMapper.leadToLeadDTO(updatedLead);
     }
@@ -85,6 +92,7 @@ public class LeadService {
             lead.setAssignTo(null);
             lead.setLeadStatus(null);
             lead.setLeadSource(null);
+
 
             leadRepository.save(lead);
         }
