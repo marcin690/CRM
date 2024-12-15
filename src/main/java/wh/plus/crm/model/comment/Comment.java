@@ -57,9 +57,9 @@ public class Comment extends Auditable<String> {
     @JoinColumn(name = "offer", nullable = true)
     private Offer offer;
 
+
+
     // encje do uzupełmnienia
-
-
     private Long projectStage;
     private Long production;
 

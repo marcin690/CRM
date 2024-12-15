@@ -9,11 +9,13 @@ public interface CommentMapper {
 
     @Mapping(source = "lead.id", target = "leadId")
     @Mapping(source = "offer.id", target = "offerId")
+    @Mapping(source = "client.id", target = "clientGlobalId")
     CommentDTO toDTO(Comment comment);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "lead", ignore = true)
-    @Mapping(source = "offerId", target = "offer.id")
+    @Mapping(target = "client", ignore = true)
+    @Mapping(target = "offer", ignore = true)
     Comment toEntity(CommentDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

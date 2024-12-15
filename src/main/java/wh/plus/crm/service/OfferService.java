@@ -6,6 +6,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -17,14 +18,14 @@ import wh.plus.crm.model.Currency;
 import wh.plus.crm.model.User;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
-import wh.plus.crm.model.offer.Offer;
-import wh.plus.crm.model.offer.OfferItem;
-import wh.plus.crm.model.offer.OfferStatus;
+import wh.plus.crm.model.offer.*;
 import wh.plus.crm.model.project.Project;
 import wh.plus.crm.repository.*;
+import wh.plus.crm.specyfications.OfferSpecification;
 
 import java.awt.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -51,6 +52,58 @@ public class OfferService {
 
         return offerMapper.toOfferDTO(offer);
     }
+
+    public Page<OfferDTO> searchOffers(
+            String createdBy, String name, ClientType clientType, InvestorType investorType,
+            OfferStatus offerStatus, ObjectType objectType, String description, Long userId,
+            Long clientId, Long leadId, Long projectId, LocalDateTime startDate,
+            LocalDateTime endDate, SalesOpportunityLevel salesOpportunityLevel, Pageable pageable) {
+
+        Specification<Offer> specification = Specification.where(null);
+
+        if (createdBy != null) {
+            specification = specification.and(OfferSpecification.hasCreatedBy(createdBy));
+        }
+        if (name != null) {
+            specification = specification.and(OfferSpecification.hasName(name));
+        }
+        if (clientType != null) {
+            specification = specification.and(OfferSpecification.hasClientType(clientType));
+        }
+        if (investorType != null) {
+            specification = specification.and(OfferSpecification.hasInvestorType(investorType));
+        }
+        if (offerStatus != null) {
+            specification = specification.and(OfferSpecification.hasOfferStatus(offerStatus));
+        }
+        if (objectType != null) {
+            specification = specification.and(OfferSpecification.hasObjectType(objectType));
+        }
+        if (description != null) {
+            specification = specification.and(OfferSpecification.hasDescription(description));
+        }
+        if (userId != null) {
+            specification = specification.and(OfferSpecification.hasUser(userId));
+        }
+        if (clientId != null) {
+            specification = specification.and(OfferSpecification.hasClient(clientId));
+        }
+        if (leadId != null) {
+            specification = specification.and(OfferSpecification.hasLead(leadId));
+        }
+        if (projectId != null) {
+            specification = specification.and(OfferSpecification.hasProject(projectId));
+        }
+        if (salesOpportunityLevel != null) {
+            specification = specification.and(OfferSpecification.hasSalesOpportunityLevel(salesOpportunityLevel));
+        }
+        if (startDate != null && endDate != null) {
+            specification = specification.and(OfferSpecification.createdBetween(startDate, endDate));
+        }
+
+        return offerRepository.findAll(specification, pageable).map(offerMapper::toOfferDTO);
+    }
+
 
     @Transactional
     public OfferDTO createOffer(OfferDTO offerDTO) {
@@ -81,8 +134,8 @@ public class OfferService {
         offer.setEuroExchangeRate(offerDTO.getEuroExchangeRate());
 
         // Ustawienia relacji opcjonalnych
-        if (offerDTO.getUserId() != null) {
-            User user = userRepository.findById(offerDTO.getUserId())
+        if (offerDTO.getUser() != null) {
+            User user = userRepository.findById(offerDTO.getUser().getId())
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
             offer.setUser(user);
         }
@@ -123,11 +176,27 @@ public class OfferService {
 
         Offer existingOffer = offerRepository.findById(offerId).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
 
-        if (offerDTO.getUserId() != null) {
-            User user = userRepository.findById(offerDTO.getUserId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (offerDTO.getUser() != null) {
+            User user = userRepository.findById(offerDTO.getUser().getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
             existingOffer.setUser(user);
         } else {
             existingOffer.setUser(null);
+        }
+
+        if (offerDTO.getApprovalReason() == null) {
+            existingOffer.setApprovalReason(null);
+        }
+        if (offerDTO.getRejectionReason() == null) {
+            existingOffer.setRejectionReason(null);
+        }
+        if (offerDTO.getRejectionReasonComment() == null) {
+            existingOffer.setRejectionReasonComment(null);
+        }
+        if (offerDTO.getRejectionOrApprovalDate() == null) {
+            existingOffer.setRejectionOrApprovalDate(null);
+        }
+        if (offerDTO.getSalesOpportunityLevel() == null) {
+            existingOffer.setSalesOpportunityLevel(null);
         }
 
         if (offerDTO.getOfferItems() != null){

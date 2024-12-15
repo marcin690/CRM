@@ -28,8 +28,10 @@ public class Offer extends Auditable<String> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name, rejectionReasonComment;
-    private String approvalReason;
+    private String name;
+
+    @Column(nullable = true)
+    private String approvalReason, rejectionReasonComment;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -37,11 +39,15 @@ public class Offer extends Auditable<String> {
 
     private boolean isArchived;
 
+    @Column(name = "is_contract_signed")
+    private boolean contractSigned;
+
     private int version;
 
     @Enumerated(EnumType.STRING)
     private Currency currency;
 
+    @Column(nullable = true)
     @Enumerated(EnumType.STRING)
     private RejectionReason rejectionReason;
 
@@ -70,7 +76,11 @@ public class Offer extends Auditable<String> {
     @Column(nullable = true, precision = 19, scale = 4)
     private BigDecimal euroExchangeRate;
 
+    @Column(nullable = true)
     private LocalDateTime rejectionOrApprovalDate;
+
+    @Column(nullable = true)
+    private LocalDateTime signedContractDate;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -22,7 +22,10 @@ public class OfferItem {
     private String title, description;
 
     @NotNull
-    private Long amount, quantity;
+    private Double amount;
+
+    @NotNull
+    private Long quantity;
 
     @Enumerated(EnumType.STRING)
     private Tax tax;

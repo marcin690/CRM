@@ -1,6 +1,7 @@
 package wh.plus.crm.dto.offer;
 
 import lombok.Data;
+import wh.plus.crm.dto.UserDTO;
 import wh.plus.crm.dto.client.ClientSummaryDTO;
 import wh.plus.crm.dto.lead.LeadSummaryDTO;
 import wh.plus.crm.dto.project.ProjectSummaryDTO;
@@ -23,6 +24,7 @@ public class OfferDTO {
     private String rejectionReasonComment;
     private String approvalReason;
     private boolean isArchived;
+    private boolean isContractSigned;
     private int version;
 
     private Currency currency;
@@ -37,11 +39,12 @@ public class OfferDTO {
     private BigDecimal totalPrice;
 
     private LocalDateTime rejectionOrApprovalDate;
+    private LocalDateTime signedContractDate;
 
     private List<OfferItemDTO> offerItems;
     private ProjectSummaryDTO project;
     private LeadSummaryDTO lead;
-    private Long userId;
+    private UserDTO user;
     private ClientSummaryDTO client;
 
 

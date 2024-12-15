@@ -11,7 +11,7 @@ public class OfferItemDTO {
     private Long id;
     private String title;
     private String description;
-    private Long amount;
+    private Double amount;
     private Long quantity;
     private Tax tax;
     private OfferDTO Offer;

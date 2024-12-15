@@ -8,10 +8,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.CommentDTO;
 import wh.plus.crm.mapper.CommentMapper;
+import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.comment.Comment;
 import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.model.offer.Offer;
+import wh.plus.crm.repository.ClientRepository;
 import wh.plus.crm.repository.CommentRepository;
 import wh.plus.crm.repository.LeadRepository;
+import wh.plus.crm.repository.OfferRepository;
 
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +35,9 @@ public class CommentService {
 
     @Autowired
     private CommentMapper commentMapper;
+    @Autowired
+    private ClientRepository clientRepository;
+    private OfferRepository offerRepository;
 
     @Transactional
     public List<CommentDTO> findCommentsAll() {
@@ -55,11 +62,36 @@ public class CommentService {
     public CommentDTO addComments(CommentDTO commentDTO){
         Comment comment = commentMapper.toEntity(commentDTO);
 
+        // Licznik powiązanych encji
+        int linkedEntities = 0;
+
+        // Ustaw relację z Lead
         if (commentDTO.getLeadId() != null) {
-            Optional<Lead> lead = leadRepository.findById(commentDTO.getLeadId());
-            lead.ifPresent(comment::setLead);
+            Lead lead = leadRepository.findById(commentDTO.getLeadId())
+                    .orElseThrow(() -> new IllegalArgumentException("Lead with ID " + commentDTO.getLeadId() + " not found"));
+            comment.setLead(lead);
+
         }
 
+        // Ustaw relację z Client
+        if (commentDTO.getClientId() != null) {
+            Client client = clientRepository.findById(commentDTO.getClientId())
+                    .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+            comment.setClient(client);
+
+        }
+
+        // Ustaw relację z Offer
+        if (commentDTO.getOfferId() != null) {
+            Offer offer = offerRepository.findById(commentDTO.getOfferId())
+                    .orElseThrow(() -> new IllegalArgumentException("Offer with ID " + commentDTO.getOfferId() + " not found"));
+            comment.setOffer(offer);
+
+        }
+
+
+
+        // Zapisz komentarz
         Comment savedComment = commentRepository.save(comment);
         return commentMapper.toDTO(savedComment);
     }

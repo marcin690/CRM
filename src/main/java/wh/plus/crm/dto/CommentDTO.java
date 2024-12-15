@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommentDTO {
     private Long id;
-    private String clientId;
     private String content;
     private CommentSentiment commentSentiment;
     private EntityType entityType;
@@ -28,6 +27,7 @@ public class CommentDTO {
     private Long offerId;
     private Long projectId;
     private Long contractId;
+    private Long clientId;
 
     //encje do uzupełnienia
     private Long projectStage;

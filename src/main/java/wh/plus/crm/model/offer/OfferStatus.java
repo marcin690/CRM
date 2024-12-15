@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 public enum OfferStatus {
 
+    DRAFT("Szkic"),
     SENT("Wysłana"),
     ACCEPTED("Zaakceptowana"),
     REJECTED("Odrzucona"),
