@@ -6,6 +6,7 @@ import wh.plus.crm.dto.client.ClientSummaryDTO;
 import wh.plus.crm.dto.lead.LeadSummaryDTO;
 import wh.plus.crm.dto.project.ProjectSummaryDTO;
 import wh.plus.crm.model.Currency;
+import wh.plus.crm.model.RejectionReason;
 import wh.plus.crm.model.offer.*;
 
 import java.math.BigDecimal;

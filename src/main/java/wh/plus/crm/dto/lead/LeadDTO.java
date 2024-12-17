@@ -3,7 +3,9 @@ package wh.plus.crm.dto.lead;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import wh.plus.crm.dto.offer.OfferSummaryDTO;
 import wh.plus.crm.model.User;
+import wh.plus.crm.model.RejectionReason;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +19,13 @@ public class LeadDTO {
     private int version;
 
     private String clientGlobalId;
+    private boolean isFinal;
+    private OfferSummaryDTO offer;
+
+    private RejectionReason rejectionReason;
+    private String rejectionReasonComment;
+
+
 
     private User assignTo;
     private Long leadStatusId;

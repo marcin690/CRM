@@ -42,7 +42,7 @@ public interface OfferMapper {
             for (OfferItem offerItem : offer.getOfferItemList()) {
                 offerItem.setOffer(offer);
             }
-        }
+   }
     }
 
     void updateEntityFromDTO(OfferDTO offerDTO, @MappingTarget Offer offer);

@@ -7,6 +7,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Currency;
+import wh.plus.crm.model.RejectionReason;
 import wh.plus.crm.model.User;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
@@ -96,8 +97,9 @@ public class Offer extends Auditable<String> {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "lead_id")
+
+    @OneToOne
+    @JoinColumn(name = "lead_id",unique = true)
     private Lead lead;
 
     @ManyToOne

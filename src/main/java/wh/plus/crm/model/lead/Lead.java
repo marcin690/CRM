@@ -6,10 +6,11 @@ import lombok.*;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import wh.plus.crm.helper.GenerateTemporaryClientId;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.User;
 import org.hibernate.envers.Audited;
+import wh.plus.crm.model.offer.Offer;
+import wh.plus.crm.model.RejectionReason;
 
 import java.time.LocalDateTime;
 
@@ -33,8 +34,19 @@ public class Lead extends Auditable<String>  {
     @Column(unique = true)
     private String clientGlobalId;
 
+
+    private boolean isFinal;
+
     @Version
     private int version;
+
+
+    @Column(nullable = true)
+    @Enumerated(EnumType.STRING)
+    private RejectionReason rejectionReason;
+
+    private String rejectionReasonComment;
+
 
 
     @ManyToOne
@@ -56,6 +68,9 @@ public class Lead extends Auditable<String>  {
     private String description;
 
     private String leadRejectedReasonComment;
+
+    @OneToOne(mappedBy = "lead")
+    private Offer offer;
 
 
     @ManyToOne(cascade = CascadeType.ALL)
