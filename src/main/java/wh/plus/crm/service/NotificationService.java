@@ -1,6 +1,7 @@
 package wh.plus.crm.service;
 
 import org.springframework.stereotype.Service;
+import wh.plus.crm.model.EntityType;
 import wh.plus.crm.model.Notification;
 import wh.plus.crm.repository.NotificationRepository;
 
@@ -12,10 +13,10 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
 
+
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
     }
-
 
     public List<Notification> getUserNotifications(Long userId){
         return notificationRepository.findByUserId(userId);

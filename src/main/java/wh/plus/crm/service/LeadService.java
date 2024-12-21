@@ -1,7 +1,9 @@
 package wh.plus.crm.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,11 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.lead.LeadDTO;
+import wh.plus.crm.events.EntityCreatedEvent;
 import wh.plus.crm.mapper.LeadMapper;
+import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
-import wh.plus.crm.repository.LeadRepository;
-import wh.plus.crm.repository.LeadSourceRepository;
-import wh.plus.crm.repository.LeadStatusRepository;
+import wh.plus.crm.model.lead.LeadStatus;
+import wh.plus.crm.repository.*;
+import wh.plus.crm.model.offer.Offer;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +37,12 @@ public class LeadService {
     private final LeadMapper leadMapper;
     private final LeadSourceRepository leadSourceRepository;
     private final ClientGlobalIdService clientGlobalIdService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ClientRepository clientRepository;
+    private final OfferRepository offerRepository;
+
+
+    private final NotificationService notificationService;
 
     @Transactional
     public List<LeadDTO> findAll() {
@@ -57,6 +67,9 @@ public class LeadService {
         }
 
         Lead savedLead = leadRepository.save(lead);
+        applicationEventPublisher.publishEvent(new EntityCreatedEvent<>(this, savedLead, "Utworzono nowy lead"));
+
+
         return leadMapper.leadToLeadDTO(savedLead);
     }
 
@@ -89,7 +102,16 @@ public class LeadService {
         for (Long id : ids) {
             Lead lead = leadRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Lead not found"));
-            lead.setAssignTo(null);
+
+            if (lead.getOffer() != null) {
+                Offer offer = lead.getOffer();
+                offer.setLead(null); // Odłączenie powiązania
+                offerRepository.save(offer); // Zapis zmian w bazie danych
+            }
+
+
+
+            lead.setUser(null);
             lead.setLeadStatus(null);
             lead.setLeadSource(null);
 
@@ -99,4 +121,33 @@ public class LeadService {
 
         leadRepository.deleteAllById(ids);
     }
+
+    public Client convertLeadToClient(Long leadId){
+        Lead lead = leadRepository.findById(leadId).orElseThrow(() -> new EntityNotFoundException("Lead not found with ID: " + leadId));
+
+        Client client = new Client();
+        client.setClientBusinessName(lead.getClientBusinessName());
+        client.setClientAdress(lead.getClientAdress());
+        client.setClientCity(lead.getClientCity());
+        client.setClientState(lead.getClientState());
+        client.setClientZip(lead.getClientZip());
+        client.setClientCountry(lead.getClientCountry());
+        client.setClientEmail(lead.getClientEmail());
+        client.setClientPhone(lead.getClientPhone());
+        client.setVatNumber(lead.getVatNumber());
+        client.setClientNotes("Converted from Lead ID: " + leadId);
+        clientRepository.save(client);
+
+        LeadStatus leadStatus = leadStatusRepository.findByStatusName("CLIENT").orElseThrow(() -> new IllegalArgumentException("LeadStatus 'CLIENT' not found"));
+
+
+
+        lead.setFinal(true);
+        lead.setLeadStatus(leadStatus);
+        leadRepository.save(lead);
+
+        return client;
+
+    }
+
 }

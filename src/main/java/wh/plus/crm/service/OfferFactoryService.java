@@ -3,7 +3,7 @@ package wh.plus.crm.service;
 import com.github.javafaker.Faker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.offer.*;
 import wh.plus.crm.repository.OfferRepository;
 

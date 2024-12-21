@@ -3,9 +3,7 @@ package wh.plus.crm.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import wh.plus.crm.dto.UserDTO;
-import wh.plus.crm.model.User;
-
-import java.util.Set;
+import wh.plus.crm.model.user.User;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

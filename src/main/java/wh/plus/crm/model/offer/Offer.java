@@ -8,7 +8,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Currency;
 import wh.plus.crm.model.RejectionReason;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
 import wh.plus.crm.model.project.Project;

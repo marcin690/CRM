@@ -11,8 +11,7 @@ import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.UserDTO;
 import wh.plus.crm.mapper.UserMapper;
 import wh.plus.crm.model.Role;
-import wh.plus.crm.model.User;
-import wh.plus.crm.repository.LeadRepository;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.repository.RoleRepository;
 import wh.plus.crm.repository.UserRepository;
 

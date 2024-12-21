@@ -3,10 +3,9 @@ package wh.plus.crm.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import wh.plus.crm.dto.UserDTO;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.service.UserService;
 

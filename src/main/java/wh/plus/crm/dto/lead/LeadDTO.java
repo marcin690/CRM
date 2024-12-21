@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wh.plus.crm.dto.offer.OfferSummaryDTO;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.RejectionReason;
 
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ public class LeadDTO {
 
 
 
-    private User assignTo;
+    private User user;
     private Long leadStatusId;
     private String name;
     private Long leadValue;

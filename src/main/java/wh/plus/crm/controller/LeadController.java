@@ -1,5 +1,6 @@
 package wh.plus.crm.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import wh.plus.crm.dto.client.ClientDTO;
 import wh.plus.crm.dto.lead.LeadDTO;
+import wh.plus.crm.mapper.ClientMapper;
+import wh.plus.crm.model.client.Client;
 import wh.plus.crm.service.LeadService;
 
 import java.time.LocalDateTime;
@@ -24,10 +28,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/leads")
+@AllArgsConstructor
 public class LeadController {
 
     @Autowired
     private LeadService leadService;
+    private final ClientMapper clientMapper;
 
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<LeadDTO>>> findAll(
@@ -74,5 +80,11 @@ public class LeadController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{leadId}/convert")
+    public ResponseEntity<ClientDTO> convertLeadToClient(@PathVariable Long leadId) {
+        Client client = leadService.convertLeadToClient(leadId); // Wywołanie metody z serwisu
+        ClientDTO clientDTO = clientMapper.clientToClientDTO(client);
+        return ResponseEntity.ok(clientDTO);
+    }
 
 }

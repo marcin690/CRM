@@ -7,7 +7,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import wh.plus.crm.model.Auditable;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import org.hibernate.envers.Audited;
 import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.RejectionReason;
@@ -50,9 +50,9 @@ public class Lead extends Auditable<String>  {
 
 
     @ManyToOne
-    @JoinColumn(name = "assign_to_id")
+    @JoinColumn(name = "user")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-    private User assignTo;
+    private User user;
 
     @ManyToOne()
     @JoinColumn(name = "lead_status_id")
@@ -69,7 +69,7 @@ public class Lead extends Auditable<String>  {
 
     private String leadRejectedReasonComment;
 
-    @OneToOne(mappedBy = "lead")
+    @OneToOne(mappedBy = "lead", orphanRemoval = false, cascade = CascadeType.DETACH)
     private Offer offer;
 
 

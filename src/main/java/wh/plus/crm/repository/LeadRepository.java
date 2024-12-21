@@ -14,10 +14,10 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
 
     Page<Lead> findAll(Pageable pageable);
 
-    @Query("SELECT l FROM Lead l left join l.assignTo at " +
+    @Query("SELECT l FROM Lead l left join l.user at " +
             "WHERE (:fromDate IS NULL OR l.creationDate >= :fromDate) " +
             "AND (:toDate IS NULL OR l.creationDate < :toDate)" +
-            "AND (:employee is null or l.assignTo.fullname = :employee)" +
+            "AND (:employee is null or l.user.fullname = :employee)" +
             "AND (:status is null or l.leadStatus.id = :status)" +
             "AND (" +
                 "(:search IS NULL or :search = '') or " +

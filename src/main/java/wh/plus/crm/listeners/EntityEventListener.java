@@ -5,7 +5,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import wh.plus.crm.events.EntityCreatedEvent;
 import wh.plus.crm.model.Notification;
-import wh.plus.crm.model.User;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.EntityType;
 import wh.plus.crm.repository.NotificationRepository;
 import wh.plus.crm.repository.UserRepository;
@@ -25,7 +25,8 @@ public class EntityEventListener {
     private UserRepository userRepository;
 
     @EventListener
-    public void handleEntityCreatedEvent(EntityCreatedEvent<?> event){
+    public <T> void handleEntityCreatedEvent(EntityCreatedEvent<T> event){
+        T entity = event.getEntity();
         createNotidications(event.getEntity(), event.getMessage());
     }
 

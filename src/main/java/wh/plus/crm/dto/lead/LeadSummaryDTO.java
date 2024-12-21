@@ -14,7 +14,7 @@ public class LeadSummaryDTO {
     private Long id;
     private String name;
     private LeadStatus leadStatus;
-    private Offer offer;
+
 
 
 }

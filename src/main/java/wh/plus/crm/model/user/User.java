@@ -1,15 +1,13 @@
-package wh.plus.crm.model;
+package wh.plus.crm.model.user;
 
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.envers.Audited;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import wh.plus.crm.model.lead.Lead;
+import wh.plus.crm.model.Role;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
