@@ -58,8 +58,8 @@ public class DataInitializer {
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
             User adminUser = new User();
-            adminUser.setUsername("admin");
-            adminUser.setPassword(passwordEncoder.encode("admin"));
+            adminUser.setUsername("marcinpohl");
+            adminUser.setPassword(passwordEncoder.encode("@Zaqwsx6vvso!"));
             adminUser.setRoles(Set.of(adminRole));
 
             userRepository.save(adminUser);
