@@ -33,9 +33,6 @@ public class Auditable<T> {
 
     protected String clientGlobalId;
 
-    public void setClientIdFromLead(String clientId) {
-        this.clientGlobalId = clientId;
-    }
 
 
 
