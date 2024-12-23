@@ -42,19 +42,19 @@ public class Comment extends Auditable<String> {
 
 
     @ManyToOne
-    @JoinColumn(name = "lead", nullable = true)
+    @JoinColumn(name = "lead_id", nullable = true)
     private Lead lead;
 
     @ManyToOne
-    @JoinColumn(name = "client", nullable = true)
+    @JoinColumn(name = "client_id", nullable = true)
     private Client client;
 
     @ManyToOne
-    @JoinColumn(name = "project", nullable = true)
+    @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
     @ManyToOne
-    @JoinColumn(name = "offer", nullable = true)
+    @JoinColumn(name = "offer_id", nullable = true)
     private Offer offer;
 
 

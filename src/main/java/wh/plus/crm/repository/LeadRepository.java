@@ -14,21 +14,32 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
 
     Page<Lead> findAll(Pageable pageable);
 
-    @Query("SELECT l FROM Lead l left join l.user at " +
-            "WHERE (:fromDate IS NULL OR l.creationDate >= :fromDate) " +
-            "AND (:toDate IS NULL OR l.creationDate < :toDate)" +
-            "AND (:employee is null or l.user.fullname = :employee)" +
-            "AND (:status is null or l.leadStatus.id = :status)" +
-            "AND (" +
-                "(:search IS NULL or :search = '') or " +
-                "lower(l.description) like lower(concat('%', :search, '%')) OR " +
-                "lower(l.name) like lower(concat('%', :search, '%')) OR " +
-                "lower(l.clientFullName) like lower(concat('%', :search, '%')) OR " +
-                "lower(l.clientBusinessName) like lower(concat('%', :search, '%') )  or " +
-                "lower(l.clientEmail) like lower (:search) or " +
-                "cast(l.vatNumber as string) = :search or " +
-                "cast(l.clientPhone as string) = :search " +
-            ")"
-    )
-    Page<Lead> findLeadsByCriteria(Pageable pageable, @Param("fromDate") LocalDateTime from, @Param("toDate") LocalDateTime to, @Param("employee") String employee, @Param("status") Long status, @Param("search") String search);
+    @Query("""
+       SELECT l 
+       FROM Lead l 
+         LEFT JOIN l.user u
+       WHERE (:fromDate IS NULL OR l.creationDate >= :fromDate)
+         AND (:toDate IS NULL OR l.creationDate < :toDate)
+         AND (:employee IS NULL OR u.fullname = :employee)
+         AND (:status IS NULL OR l.leadStatus.id = :status)
+         AND (
+             (:search IS NULL OR :search = '') 
+             OR lower(l.description) like lower(concat('%', :search, '%')) 
+             OR lower(l.name) like lower(concat('%', :search, '%')) 
+             OR lower(l.clientFullName) like lower(concat('%', :search, '%')) 
+             OR lower(l.clientBusinessName) like lower(concat('%', :search, '%')) 
+             OR lower(l.clientEmail) like lower(concat('%', :search, '%')) 
+             OR cast(l.vatNumber as string) = :search 
+             OR cast(l.clientPhone as string) = :search
+         )
+       """)
+    Page<Lead> findLeadsByCriteria(
+            Pageable pageable,
+            @Param("fromDate") LocalDateTime from,
+            @Param("toDate") LocalDateTime to,
+            @Param("employee") String employee,
+            @Param("status") Long status,
+            @Param("search") String search
+    );
+
 }

@@ -27,7 +27,6 @@ import java.util.List;
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
-@Audited
 public class Client extends Auditable<String>   {
 
     @Id

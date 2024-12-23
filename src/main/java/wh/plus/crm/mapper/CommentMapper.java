@@ -9,7 +9,7 @@ public interface CommentMapper {
 
     @Mapping(source = "lead.id", target = "leadId")
     @Mapping(source = "offer.id", target = "offerId")
-    @Mapping(source = "client.id", target = "clientGlobalId")
+    @Mapping(source = "client.id", target = "clientId")
     CommentDTO toDTO(Comment comment);
 
     @Mapping(target = "id", ignore = true)

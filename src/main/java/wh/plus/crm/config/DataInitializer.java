@@ -52,7 +52,7 @@ public class DataInitializer {
     }
 
     private void initializeAdminUser() {
-        Optional<User> adminOptional = userRepository.findByUsername("admin");
+        Optional<User> adminOptional = userRepository.findByUsername("marcinpohl");
         if (adminOptional.isEmpty()) {
             Role adminRole = roleRepository.findByName(Role.RoleName.ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role not found"));

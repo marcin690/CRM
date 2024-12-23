@@ -50,7 +50,7 @@ public class Lead extends Auditable<String>  {
 
 
     @ManyToOne
-    @JoinColumn(name = "user")
+    @JoinColumn(name = "user_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private User user;
 
