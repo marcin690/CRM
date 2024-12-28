@@ -1,7 +1,9 @@
 package wh.plus.crm.model.offer;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -22,11 +24,12 @@ import java.util.List;
 @Table(name = "offers")
 @EntityListeners(AuditingEntityListener.class)
 @Data
+@ToString(exclude = {"offerItemList"})
 @Audited
 public class Offer extends Auditable<String> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -91,6 +94,7 @@ public class Offer extends Auditable<String> {
 
 
     @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<OfferItem> offerItemList = new ArrayList<>();
 
     @ManyToOne

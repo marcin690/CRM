@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum Tax {
 
-    VAT_0(0, "5%"),
-    VAT_5(0.5, "23%"),
+    VAT_0(0, "0%"),
+    VAT_5(0.05, "5%"),
     VAT_23(0.23, "23%");
 
     private final double rate;

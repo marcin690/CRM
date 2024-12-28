@@ -39,6 +39,9 @@ public class OfferDTO {
     private BigDecimal euroExchangeRate;
     private BigDecimal totalPrice;
 
+
+
+
     private LocalDateTime rejectionOrApprovalDate;
     private LocalDateTime signedContractDate;
 

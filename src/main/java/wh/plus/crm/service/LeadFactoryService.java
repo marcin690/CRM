@@ -27,7 +27,7 @@ public class LeadFactoryService {
          for (int i = 0; i < numberOfLeads; i++){
              Lead lead = new Lead();
              lead.setName(faker.company().name());
-             lead.setLeadValue(faker.number().numberBetween(100L, 100000L));
+//             lead.setLeadValue(faker.number().numberBetween(100L, 100000L));
              lead.setRoomsQuantity(faker.number().numberBetween(1L, 10L));
              lead.setExecutionDate(LocalDateTime.now().plusDays(faker.number().numberBetween(1,30)));
              lead.setDescription(faker.lorem().sentence());

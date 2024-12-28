@@ -88,9 +88,15 @@ public class LeadService {
     public Page<LeadDTO> getLeads(Pageable pageable, LocalDateTime fromDate, LocalDateTime toDate, String employee, Long status, String search ){
         logger.debug("Parametry wejściowe - fromDate: {}, toDate: {}, employee: {}, status: {}, search: {}", fromDate, toDate, employee, status, search);
 
-        if(fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
-           Pageable defaultPageable = PageRequest.of(pageable.getPageNumber(), 25, pageable.getSort().and(Sort.by("creationDate")));
-           return leadRepository.findAll(defaultPageable).map(leadMapper::leadToLeadDTO);
+        if (fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
+            // Tworzymy domyślny Pageable
+            Pageable defaultPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    25,
+                    Sort.by("id").descending()
+            );
+            return leadRepository.findAll(defaultPageable)
+                    .map(leadMapper::leadToLeadDTO);
         }
 
         Page<Lead> filteredLeads = leadRepository.findLeadsByCriteria(pageable, fromDate, toDate, employee, status, search);

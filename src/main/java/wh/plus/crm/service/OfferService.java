@@ -161,6 +161,8 @@ public class OfferService {
         // Przeliczenie ceny
         recalculateTotalOfferItemsPrice(offer);
 
+        calculateGrossAndTaxForItems(offer);
+
         // Zapis do bazy
         Offer savedOffer = offerRepository.save(offer);
 
@@ -254,7 +256,7 @@ public class OfferService {
         }
 
 
-
+        calculateGrossAndTaxForItems(existingOffer);
         recalculateTotalOfferItemsPrice(existingOffer);
 
         Offer updatedOffer = offerRepository.save(existingOffer);
@@ -305,7 +307,7 @@ public class OfferService {
 
         BigDecimal totalAmount = offer.getOfferItemList().stream()
                 .filter(item -> item.getQuantity() != null && item.getAmount() != null) // Ignorowanie niepełnych danych
-                .map(item -> BigDecimal.valueOf(item.getAmount() * item.getQuantity()))
+                .map(item -> item.getAmount().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (offer.getCurrency() == Currency.EUR) {
@@ -319,6 +321,24 @@ public class OfferService {
             // Domyślne przetwarzanie dla PLN
             offer.setTotalPrice(totalAmount);
             offer.setTotalPriceInEUR(null); // Wartość w EUR nie dotyczy PLN
+        }
+    }
+
+    private void calculateGrossAndTaxForItems(Offer offer) {
+        for (OfferItem item : offer.getOfferItemList()) {
+            if(item.getAmount() != null && item.getQuantity() != null && item.getTax() != null) {
+                BigDecimal netAmount = (item.getAmount().multiply(BigDecimal.valueOf(item.getQuantity())));
+                BigDecimal taxRate = BigDecimal.valueOf(item.getTax().getRate());
+
+                BigDecimal taxAmount = netAmount.multiply(taxRate);
+
+                BigDecimal grossAmount = netAmount.add(taxAmount);
+
+                item.setTaxAmount(taxAmount);
+                item.setGrossAmount(grossAmount);
+
+
+            }
         }
     }
 }

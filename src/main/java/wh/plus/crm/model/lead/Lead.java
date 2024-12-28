@@ -1,6 +1,7 @@
 package wh.plus.crm.model.lead;
 
 import com.fasterxml.jackson.annotation.*;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.RelationTargetAuditMode;
@@ -21,13 +22,13 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
 @Audited
 public class Lead extends Auditable<String>  {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
@@ -56,11 +57,13 @@ public class Lead extends Auditable<String>  {
 
     @ManyToOne()
     @JoinColumn(name = "lead_status_id")
+    @Nullable
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private LeadStatus leadStatus;
 
     private String name;
-    private Long leadValue, roomsQuantity;
+    private Long roomsQuantity;
+    private Double leadValue;
 
     private LocalDateTime executionDate;
 

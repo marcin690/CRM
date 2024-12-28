@@ -20,7 +20,7 @@ public class Auditable<T> {
     @CreatedBy
     protected T createdBy;
 
-    @CreatedDate
+//    @CreatedDate
     @Column(name = "creation_date", columnDefinition = "TIMESTAMP")
     protected LocalDateTime creationDate;
 
@@ -33,7 +33,16 @@ public class Auditable<T> {
 
     protected String clientGlobalId;
 
+    @Transient
+    private boolean skipAudit = false;
 
+    @PrePersist
+    public void prePersist() {
+
+        if (!skipAudit && creationDate == null) {
+            creationDate = LocalDateTime.now();
+        }
+    }
 
 
 }
