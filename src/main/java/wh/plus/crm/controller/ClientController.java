@@ -26,11 +26,23 @@ public class ClientController {
             PagedResourcesAssembler<ClientDTO> assembler
     ) {
         Page<ClientDTO> clientsPage;
-        if(search != null && !search.isEmpty()) {
-            clientsPage = clientService.searchClients(pageable, search);
-        } else {
-            clientsPage = clientService.getClients(pageable);
-        }
+
+        clientsPage = clientService.getClients(pageable);
+        PagedModel<EntityModel<ClientDTO>> pagedModel = assembler.toModel(clientsPage);
+        return new ResponseEntity<>(pagedModel, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PagedModel<EntityModel<ClientDTO>>> searchClients(
+            @RequestParam(required = false) String clientFullName,
+            @RequestParam(required = false) String clientBusinessName,
+            @RequestParam(required = false) String clientEmail,
+            @RequestParam(required = false) Long clientPhone,
+            @RequestParam(required = false) Long vatNumber,
+            Pageable pageable,
+            PagedResourcesAssembler<ClientDTO> assembler
+    ) {
+        Page<ClientDTO> clientsPage = clientService.searchClients(clientFullName, clientBusinessName, clientEmail, clientPhone, vatNumber, pageable);
         PagedModel<EntityModel<ClientDTO>> pagedModel = assembler.toModel(clientsPage);
         return new ResponseEntity<>(pagedModel, HttpStatus.OK);
     }

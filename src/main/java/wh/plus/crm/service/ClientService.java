@@ -3,11 +3,13 @@ package wh.plus.crm.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.client.ClientDTO;
 import wh.plus.crm.mapper.ClientMapper;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.repository.ClientRepository;
+import wh.plus.crm.specyfications.ClientSpecification;
 
 import java.util.NoSuchElementException;
 
@@ -32,8 +34,26 @@ public class ClientService {
         return clientPage.map(clientMapper::clientToClientDTO);
     }
 
-    public Page<ClientDTO> searchClients(Pageable pageable, String search) {
-        Page<Client> clients = clientRepository.searchClients(search, pageable);
+    public Page<ClientDTO> searchClients(String fullName, String businessName, String email, Long phone, Long vatNumber, Pageable pageable) {
+        Specification<Client> spec = Specification.where(null);
+
+        if (fullName != null && !fullName.isEmpty()) {
+            spec = spec.and(ClientSpecification.hasClientFullName(fullName));
+        }
+        if (businessName != null && !businessName.isEmpty()) {
+            spec = spec.and(ClientSpecification.hasClientBusinessName(businessName));
+        }
+        if (email != null && !email.isEmpty()) {
+            spec = spec.and(ClientSpecification.hasClientEmail(email));
+        }
+        if (phone != null) {
+            spec = spec.and(ClientSpecification.hasClientPhone(phone));
+        }
+        if (vatNumber != null) {
+            spec = spec.and(ClientSpecification.hasVatNumber(vatNumber));
+        }
+
+        Page<Client> clients = clientRepository.findAll(spec, pageable);
         return clients.map(clientMapper::clientToClientDTO);
 
     }
