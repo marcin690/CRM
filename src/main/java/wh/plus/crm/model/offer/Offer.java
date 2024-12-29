@@ -102,9 +102,10 @@ public class Offer extends Auditable<String> {
     private Project project;
 
 
-    @OneToOne
-    @JoinColumn(name = "lead_id",unique = true)
-    private Lead lead;
+   @ManyToOne
+   @JoinColumn(name = "lead_id", nullable = true)
+   private Lead lead;
+
 
     @ManyToOne
     @JoinColumn(name = "client_id")

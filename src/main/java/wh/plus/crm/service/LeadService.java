@@ -109,10 +109,11 @@ public class LeadService {
             Lead lead = leadRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
-            if (lead.getOffer() != null) {
-                Offer offer = lead.getOffer();
-                offer.setLead(null); // Odłączenie powiązania
-                offerRepository.save(offer); // Zapis zmian w bazie danych
+            if (lead.getOffers() != null && !lead.getOffers().isEmpty()) {
+                for (Offer offer : lead.getOffers()) {
+                    offer.setLead(null); // Odłączenie leadu od oferty
+                    offerRepository.save(offer); // Zapis zmian w bazie danych
+                }
             }
 
 

@@ -3,6 +3,9 @@ package wh.plus.crm.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,17 +20,19 @@ public class ClientController {
     private final ClientService clientService;
 
     @GetMapping
-    public ResponseEntity<Page<ClientDTO>> getClients(
+    public ResponseEntity<PagedModel<EntityModel<ClientDTO>>> getClients(
             Pageable pageable,
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            PagedResourcesAssembler<ClientDTO> assembler
     ) {
-        Page<ClientDTO> clients;
+        Page<ClientDTO> clientsPage;
         if(search != null && !search.isEmpty()) {
-            clients = clientService.searchClients(pageable, search);
+            clientsPage = clientService.searchClients(pageable, search);
         } else {
-            clients  = clientService.getClients(pageable);
+            clientsPage = clientService.getClients(pageable);
         }
-        return ResponseEntity.ok(clients);
+        PagedModel<EntityModel<ClientDTO>> pagedModel = assembler.toModel(clientsPage);
+        return new ResponseEntity<>(pagedModel, HttpStatus.OK);
     }
 
 

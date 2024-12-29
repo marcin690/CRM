@@ -12,8 +12,11 @@ import wh.plus.crm.model.user.User;
 import org.hibernate.envers.Audited;
 import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.RejectionReason;
+import java.util.List;
+
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "leads")
@@ -72,8 +75,8 @@ public class Lead extends Auditable<String>  {
 
     private String leadRejectedReasonComment;
 
-    @OneToOne(mappedBy = "lead", orphanRemoval = false, cascade = CascadeType.DETACH)
-    private Offer offer;
+    @OneToMany(mappedBy = "lead", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Offer> offers = new ArrayList<>();
 
 
     @ManyToOne(cascade = CascadeType.ALL)

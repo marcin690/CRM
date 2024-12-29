@@ -219,16 +219,18 @@ public class OfferImportController {
         // Pobieramy 'total_tax' i 'total' z oryginalnych danych
         String totalTaxStr = String.valueOf(oldOffer.getOrDefault("total_tax", "0.00"));
         String totalStr = String.valueOf(oldOffer.getOrDefault("total", "0.00"));
+        String subTotalStr = String.valueOf(oldOffer.getOrDefault("subtotal", "0.00"));
 
         BigDecimal totalTax = parseBigDecimal(totalTaxStr);
         BigDecimal total = parseBigDecimal(totalStr);
+        BigDecimal subTotal = parseBigDecimal(subTotalStr);
 
         List<OfferItem> offerItems = new ArrayList<>();
         OfferItem item = new OfferItem();
         // Nie ustawiamy ID ręcznie, zakładamy, że jest automatycznie generowane
         item.setTitle((String) oldOffer.getOrDefault("title", "Pozycja oferty"));
         item.setDescription((String) oldOffer.getOrDefault("description", ""));
-        item.setAmount(total);
+        item.setAmount(subTotal);
         item.setQuantity(1L);
         item.setTax(Tax.VAT_23); // Zakładam, że podatek jest stały, można to również mapować
         item.setTaxAmount(totalTax);
@@ -304,15 +306,15 @@ public class OfferImportController {
         if (salesmanName == null) return null;
         switch (salesmanName) {
             case "Grzegorz Raczek":
-                return 8L;
-            case "Rafał Hyla":
-                return 12L;
-            case "Dariusz Kwieciński":
                 return 7L;
-            case "Krystian Kwieciński":
-                return 9L;
-            case "Joanna Apryjas":
+            case "Rafał Hyla":
                 return 10L;
+            case "Dariusz Kwieciński":
+                return 6L;
+            case "Krystian Kwieciński":
+                return 8L;
+            case "Joanna Apryjas":
+                return 9L;
             case "Jagoda Szymczak":
                 return 2L;
             default:
@@ -333,7 +335,7 @@ public class OfferImportController {
             case "inne":
                 return RejectionReason.OTHER;
             default:
-                return RejectionReason.OTHER; // Możesz dostosować w razie potrzeby
+                return null; // Możesz dostosować w razie potrzeby
         }
     }
 
