@@ -1,6 +1,7 @@
 package wh.plus.crm.model.lead;
 
 import com.fasterxml.jackson.annotation.*;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.envers.RelationTargetAuditMode;
@@ -13,6 +14,8 @@ import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.RejectionReason;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "leads")
@@ -21,13 +24,13 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+//@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @EnableJpaAuditing
 @Audited
 public class Lead extends Auditable<String>  {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
 
@@ -56,11 +59,13 @@ public class Lead extends Auditable<String>  {
 
     @ManyToOne()
     @JoinColumn(name = "lead_status_id")
+    @Nullable
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private LeadStatus leadStatus;
 
     private String name;
-    private Long leadValue, roomsQuantity;
+    private Long roomsQuantity;
+    private Double leadValue;
 
     private LocalDateTime executionDate;
 
@@ -69,8 +74,8 @@ public class Lead extends Auditable<String>  {
 
     private String leadRejectedReasonComment;
 
-    @OneToOne(mappedBy = "lead", orphanRemoval = false, cascade = CascadeType.DETACH)
-    private Offer offer;
+    @OneToMany(mappedBy = "lead", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<Offer> offers = new ArrayList<>();
 
 
     @ManyToOne(cascade = CascadeType.ALL)

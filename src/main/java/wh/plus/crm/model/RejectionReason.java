@@ -30,7 +30,8 @@ public enum RejectionReason {
     OVERLY_COMPLEX_ORDER("Zbyt duża różnorodność zamówienia"),
     MISSING_CERTIFICATIONS("Problemy z certyfikacjami"),
     NON_COMPLIANCE_ENVIRONMENTAL_POLICY("Niezgodność z polityką środowiskową klienta"),
-    LEGAL_RISKS("Ryzyko prawne");
+    LEGAL_RISKS("Ryzyko prawne"),
+    NO_CONTACT("Brak kontaktu");
 
 
     private final String description;

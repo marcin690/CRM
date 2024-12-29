@@ -88,9 +88,15 @@ public class LeadService {
     public Page<LeadDTO> getLeads(Pageable pageable, LocalDateTime fromDate, LocalDateTime toDate, String employee, Long status, String search ){
         logger.debug("Parametry wejściowe - fromDate: {}, toDate: {}, employee: {}, status: {}, search: {}", fromDate, toDate, employee, status, search);
 
-        if(fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
-           Pageable defaultPageable = PageRequest.of(pageable.getPageNumber(), 25, pageable.getSort().and(Sort.by("creationDate")));
-           return leadRepository.findAll(defaultPageable).map(leadMapper::leadToLeadDTO);
+        if (fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
+            // Tworzymy domyślny Pageable
+            Pageable defaultPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    25,
+                    Sort.by("id").descending()
+            );
+            return leadRepository.findAll(defaultPageable)
+                    .map(leadMapper::leadToLeadDTO);
         }
 
         Page<Lead> filteredLeads = leadRepository.findLeadsByCriteria(pageable, fromDate, toDate, employee, status, search);
@@ -103,10 +109,11 @@ public class LeadService {
             Lead lead = leadRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Lead not found"));
 
-            if (lead.getOffer() != null) {
-                Offer offer = lead.getOffer();
-                offer.setLead(null); // Odłączenie powiązania
-                offerRepository.save(offer); // Zapis zmian w bazie danych
+            if (lead.getOffers() != null && !lead.getOffers().isEmpty()) {
+                for (Offer offer : lead.getOffers()) {
+                    offer.setLead(null); // Odłączenie leadu od oferty
+                    offerRepository.save(offer); // Zapis zmian w bazie danych
+                }
             }
 
 

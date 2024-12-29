@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import wh.plus.crm.model.Tax;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 public class OfferItemDTO {
@@ -11,9 +13,11 @@ public class OfferItemDTO {
     private Long id;
     private String title;
     private String description;
-    private Double amount;
+    private BigDecimal amount;
     private Long quantity;
     private Tax tax;
     private OfferDTO Offer;
+    private BigDecimal grossAmount;
+    private BigDecimal taxAmount;
 
 }

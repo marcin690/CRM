@@ -30,7 +30,7 @@ public class LeadDTO {
     private User user;
     private Long leadStatusId;
     private String name;
-    private Long leadValue;
+    private Double leadValue;
     private Long roomsQuantity;
     private LocalDateTime executionDate;
     private String description;

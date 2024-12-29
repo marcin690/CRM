@@ -4,7 +4,9 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -40,7 +42,14 @@ public class OfferService {
     private final ProjectRepository projectRepository;
 
     public Page<OfferDTO> getOffers(Pageable pageable) {
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
         return offerRepository.findAll(pageable).map(offerMapper::toOfferDTO);
+
     }
 
     public OfferDTO getOfferById(Long id){
@@ -98,7 +107,13 @@ public class OfferService {
             specification = specification.and(OfferSpecification.createdBetween(startDate, endDate));
         }
 
-        return offerRepository.findAll(specification, pageable).map(offerMapper::toOfferDTO);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        return offerRepository.findAll(specification, sortedPageable).map(offerMapper::toOfferDTO);
     }
 
 
@@ -160,6 +175,8 @@ public class OfferService {
 
         // Przeliczenie ceny
         recalculateTotalOfferItemsPrice(offer);
+
+        calculateGrossAndTaxForItems(offer);
 
         // Zapis do bazy
         Offer savedOffer = offerRepository.save(offer);
@@ -254,7 +271,7 @@ public class OfferService {
         }
 
 
-
+        calculateGrossAndTaxForItems(existingOffer);
         recalculateTotalOfferItemsPrice(existingOffer);
 
         Offer updatedOffer = offerRepository.save(existingOffer);
@@ -305,7 +322,7 @@ public class OfferService {
 
         BigDecimal totalAmount = offer.getOfferItemList().stream()
                 .filter(item -> item.getQuantity() != null && item.getAmount() != null) // Ignorowanie niepełnych danych
-                .map(item -> BigDecimal.valueOf(item.getAmount() * item.getQuantity()))
+                .map(item -> item.getAmount().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (offer.getCurrency() == Currency.EUR) {
@@ -319,6 +336,24 @@ public class OfferService {
             // Domyślne przetwarzanie dla PLN
             offer.setTotalPrice(totalAmount);
             offer.setTotalPriceInEUR(null); // Wartość w EUR nie dotyczy PLN
+        }
+    }
+
+    private void calculateGrossAndTaxForItems(Offer offer) {
+        for (OfferItem item : offer.getOfferItemList()) {
+            if(item.getAmount() != null && item.getQuantity() != null && item.getTax() != null) {
+                BigDecimal netAmount = (item.getAmount().multiply(BigDecimal.valueOf(item.getQuantity())));
+                BigDecimal taxRate = BigDecimal.valueOf(item.getTax().getRate());
+
+                BigDecimal taxAmount = netAmount.multiply(taxRate);
+
+                BigDecimal grossAmount = netAmount.add(taxAmount);
+
+                item.setTaxAmount(taxAmount);
+                item.setGrossAmount(grossAmount);
+
+
+            }
         }
     }
 }
