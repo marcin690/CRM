@@ -6,6 +6,7 @@ import wh.plus.crm.model.offer.OfferStatus;
 
 @Data
 @AllArgsConstructor
+
 public class OfferSummaryDTO {
 
     private Long id;

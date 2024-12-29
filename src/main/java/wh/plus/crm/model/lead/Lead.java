@@ -12,11 +12,10 @@ import wh.plus.crm.model.user.User;
 import org.hibernate.envers.Audited;
 import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.model.RejectionReason;
-import java.util.List;
-
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "leads")

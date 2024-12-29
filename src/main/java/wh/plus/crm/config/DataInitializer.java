@@ -68,16 +68,16 @@ public class DataInitializer {
 
     private void initializeUsers() {
         List<User> users = Arrays.asList(
-                new User(2L, "jagodaszymczak", "$2a$08$AYYWo0zOAgDCTnnfz2Oxa.CfK3QZTw4CUm25i8/tPG/OLS.4/aQIm", "jagoda@w-h.pl", "Jagoda Szymczak", "jagoda.png", 539631014L, false, Set.of()),
+                new User(2L, "jagodaszymczak", "$2a$08$AYYWo0zOAgDCTnnfz2Oxa.CfK3QZTw4CUm25i8/tPG/OLS.4/aQIm", "jagoda@w-h.pl", "Jagoda Szymczak", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/07/jagoda-500x500.png", 539631014L, true, Set.of()),
                 new User(3L, "piotrswitalski", "$2a$08$9P78p0g8.FAnYY79kaQcseitbm3dvqamM4/YM7BZIP.0IewIOPhB.", "piotr@w-h.pl", "Piotr Świtalski", "piotr.png", 506332373L, false, Set.of()),
                 new User(5L, "justynachociaj", "$2a$08$Vde2.y4ivqzQ6RpqTVGOdOfROUVVxtKtEWLu47oPdouKGNYWAco/a", "justyna@w-h.pl", "Justyna Chociaj", null, null, false, Set.of()),
                 new User(6L, "dorotaprzybyla", "$2a$08$pXFuLvx8HOhFCGQeKyq.YulZPfgKbMI3EOLX4MeJsp5t5br1sLJiu", "dorota@w-h.pl", "Dorota Przybyła", "dorota.png", null, false, Set.of()),
-                new User(7L, "dariuszkwiecinski", "$2a$08$AdnZO/Mqulsq6wyPZi7X4uf.Mm84I7FhyvH7dAy3Z30rBCSVEUp9C", "dkwiecinski@w-h.pl", "Dariusz Kwieciński", "darek.png", null, false, Set.of()),
-                new User(8L, "grzegorzraczek", "$2a$08$lMg1Lu6IcSxajWoHXLJbUO8CqzPy.SqUoLz6V/TTMFkvNbAtu7U6u", "g.raczek@w-h.pl", "Grzegorz Raczek", "grzegorz.png", null, false, Set.of()),
-                new User(9L, "krystiankwiecinski", "$2a$08$dYmzJ5ciocH0THpic5uzkejWNfHoyP0dFodJqhmGQ5Uy0rNipwe06", "krystian@w-h.pl", "Krystian Kwieciński", "krystian (1).png", null, false, Set.of()),
-                new User(10L, "joannaapryjas", "$2a$08$/WEXjGx3Y.SyS1DgI/f1deQlJPEJxm7nJ27/hfrMEPjciUOOXSJ8G", "joanna@w-h.pl", "Joanna Apryjas", "joanna-1.png", null, false, Set.of()),
+                new User(7L, "dariuszkwiecinski", "$2a$08$AdnZO/Mqulsq6wyPZi7X4uf.Mm84I7FhyvH7dAy3Z30rBCSVEUp9C", "dkwiecinski@w-h.pl", "Dariusz Kwieciński", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/07/darek-500x500.png", null, true, Set.of()),
+                new User(8L, "grzegorzraczek", "$2a$08$lMg1Lu6IcSxajWoHXLJbUO8CqzPy.SqUoLz6V/TTMFkvNbAtu7U6u", "g.raczek@w-h.pl", "Grzegorz Raczek", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/07/grzegorz-1-500x500.png", null, true, Set.of()),
+                new User(9L, "krystiankwiecinski", "$2a$08$dYmzJ5ciocH0THpic5uzkejWNfHoyP0dFodJqhmGQ5Uy0rNipwe06", "krystian@w-h.pl", "Krystian Kwieciński", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/12/krystian-500x500.jpeg", null, true, Set.of()),
+                new User(10L, "joannaapryjas", "$2a$08$/WEXjGx3Y.SyS1DgI/f1deQlJPEJxm7nJ27/hfrMEPjciUOOXSJ8G", "joanna@w-h.pl", "Joanna Apryjas", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/07/joanna-1-500x500.png", null, true, Set.of()),
 
-                new User(12L, "rafalhyla", "$2a$08$Gdo0mTrC4rU1fduyggEvpe1zg9I.a09PjB5rv6eQmeK5JP02KOfEK", "info@rafalhyla.pl", "Rafał Hyla", "rafal-.png", null, false, Set.of()),
+                new User(12L, "rafalhyla", "$2a$08$Gdo0mTrC4rU1fduyggEvpe1zg9I.a09PjB5rv6eQmeK5JP02KOfEK", "info@rafalhyla.pl", "Rafał Hyla", "https://wyposazenie-hotelowe.pl/wp-content/uploads/2023/12/rafal-500x500.jpeg", null, true, Set.of()),
 
                 new User(14L, "kingachalon", "$2a$08$cc6FCEiD7pys88mP9z/ulO5u4vXxyJzaQGNBOB7/KnIX7us1yD1DG", "kinga@w-h.pl", "Kinga Chałon", "kinga (1).png", null, false, Set.of()),
                 new User(16L, "agatagryszka", "$2a$08$0J2KcebPmZWVP2pFzSGiPO06vU23Vz3asNsfYXUhNtJiD9T2p3.pC", "agata@bogu.pl", "Agata Gryszka", null, null, false, Set.of()),
