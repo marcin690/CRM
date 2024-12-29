@@ -12,9 +12,11 @@ import wh.plus.crm.repository.LeadRepository;
 import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.repository.LeadStatusRepository;
 import wh.plus.crm.repository.UserRepository;
+import wh.plus.crm.service.ClientGlobalIdService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -27,21 +29,39 @@ public class LeadImportController {
     private final LeadSourceRepository leadSourceRepository;
     private final LeadStatusRepository leadStatusRepository;
     private final UserRepository userRepository;
+    private final ClientGlobalIdService clientGlobalIdService;
+
+    private final Map<Long, String> leadGlobalIdCache = new HashMap<>();
 
     public LeadImportController(LeadRepository leadRepository,
                                 LeadSourceRepository leadSourceRepository,
                                 LeadStatusRepository leadStatusRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository, ClientGlobalIdService clientGlobalIdService) {
         this.leadRepository = leadRepository;
         this.leadSourceRepository = leadSourceRepository;
         this.leadStatusRepository = leadStatusRepository;
         this.userRepository = userRepository;
+        this.clientGlobalIdService = clientGlobalIdService;
     }
 
     @PostMapping("/leads")
     public ResponseEntity<String> importLeads(@RequestBody List<Map<String, Object>> oldLeads) {
         for (Map<String, Object> oldLead : oldLeads) {
             Lead lead = mapOldLeadToLead(oldLead);
+
+            // Sprawdzenie i generowanie ClientGlobalId
+            if (lead.getClientGlobalId() == null || lead.getClientGlobalId().isEmpty()) {
+                String generatedId = clientGlobalIdService.generateClientGlobalId();
+                lead.setClientGlobalId(generatedId);
+
+                // Zapamiętaj w cache
+                Long leadId = lead.getId();
+                if (leadId != null) {
+                    leadGlobalIdCache.put(leadId, generatedId);
+                }
+            }
+
+
             leadRepository.save(lead); // Zapis do bazy danych
         }
         return ResponseEntity.ok("Leads imported successfully!");
@@ -132,6 +152,10 @@ public class LeadImportController {
         lead.setLastModifiedDate(parseDateOrDefault((String) oldLead.get("last_status_change"), LocalDateTime.now()));
 
         return lead;
+    }
+
+    public String getClientGlobalIdForLead(Long leadId) {
+        return leadGlobalIdCache.get(leadId);
     }
 
     private LeadStatus findLeadStatus(Map<String, Object> oldLead) {

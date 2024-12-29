@@ -2,7 +2,9 @@ package wh.plus.crm.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.EntityModel;
@@ -26,9 +28,12 @@ public class OfferController {
 
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<OfferDTO>>> findAll(
+            @RequestParam(defaultValue = "id,desc") String sort,
             Pageable pageable,
             PagedResourcesAssembler<OfferDTO> assembler
     ) {
+
+
         // Pobieranie ofert z serwisu
         Page<OfferDTO> offers = offerService.getOffers(pageable);
 

@@ -1,5 +1,7 @@
 package wh.plus.crm.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import wh.plus.crm.model.Tax;
@@ -20,6 +22,8 @@ import java.util.*;
 @RequestMapping("/api/import")
 public class OfferImportController {
 
+    private static final Logger logger = LoggerFactory.getLogger(OfferImportController.class);
+
     private final OfferRepository offerRepository;
     private final UserRepository userRepository;
     private final LeadRepository leadRepository;
@@ -36,22 +40,62 @@ public class OfferImportController {
     }
 
     @PostMapping("/offers")
-    public ResponseEntity<String> importOffers(@RequestBody List<Map<String, Object>> oldOffers) {
+    public ResponseEntity<Map<String, Object>> importOffers(@RequestBody List<Map<String, Object>> oldOffers) {
+        List<Map<String, Object>> skippedOffers = new ArrayList<>();
+        List<Map<String, Object>> importedOffers = new ArrayList<>();
+
         for (Map<String, Object> oldOffer : oldOffers) {
+            String offerIdStr = String.valueOf(oldOffer.get("id"));
+            Long offerId = parseLongOrDefault(offerIdStr, null);
+
+            if (offerId == null) {
+                Map<String, Object> skippedOfferInfo = new HashMap<>();
+                skippedOfferInfo.put("id", offerIdStr);
+                skippedOfferInfo.put("reason", "Invalid or missing 'id'");
+                skippedOffers.add(skippedOfferInfo);
+                logger.warn("Skipping offer with invalid or missing 'id': {}", offerIdStr);
+                continue;
+            }
+
+            // Sprawdzenie, czy oferta już istnieje
+            if (offerRepository.existsById(offerId)) {
+                Map<String, Object> skippedOfferInfo = new HashMap<>();
+                skippedOfferInfo.put("id", offerIdStr);
+                skippedOfferInfo.put("reason", "Offer with this ID already exists");
+                skippedOffers.add(skippedOfferInfo);
+                logger.warn("Skipping offer with existing 'id': {}", offerIdStr);
+                continue;
+            }
+
             try {
                 // Mapowanie starego obiektu -> Offer
                 Offer offer = mapOldOfferToOffer(oldOffer);
 
                 // Zapis do bazy
                 offerRepository.save(offer);
+
+                // Dodanie do listy zaimportowanych ofert (opcjonalnie)
+                Map<String, Object> importedOfferInfo = new HashMap<>();
+                importedOfferInfo.put("id", offer.getId());
+                importedOffers.add(importedOfferInfo);
             } catch (Exception e) {
-                // Logowanie błędu i kontynuacja importu następnych ofert
-                // Możesz użyć loggera zamiast System.err
-                System.err.println("Błąd podczas importu oferty o ID: " + oldOffer.get("id") + " - " + e.getMessage());
+                // Dodanie oferty do listy pominiętych wraz z przyczyną
+                Map<String, Object> skippedOfferInfo = new HashMap<>();
+                skippedOfferInfo.put("id", offerIdStr);
+                skippedOfferInfo.put("reason", e.getMessage());
+                skippedOffers.add(skippedOfferInfo);
+
+                // Logowanie błędu
+                logger.error("Błąd podczas importu oferty o ID: {} - {}", offerIdStr, e.getMessage());
             }
         }
 
-        return ResponseEntity.ok("Offers imported successfully!");
+        // Przygotowanie odpowiedzi z listą zaimportowanych i pominiętych ofert
+        Map<String, Object> response = new HashMap<>();
+        response.put("importedOffers", importedOffers);
+        response.put("skippedOffers", skippedOffers);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -61,32 +105,29 @@ public class OfferImportController {
         Offer offer = new Offer();
 
         // 1. Ustawiamy ID takie jak w starym systemie
-        //    Uwaga: jeśli mamy już oferty w bazie, to zależnie od strategii
-        //    trzeba ewentualnie sprawdzić, czy nie występuje konflikt kluczy.
-        Long oldId = parseLongOrDefault((String) oldOffer.get("id"), null);
+        Long oldId = parseLongOrDefault(String.valueOf(oldOffer.get("id")), null);
         if (oldId != null) {
             offer.setId(oldId);
+        } else {
+            throw new IllegalArgumentException("Invalid 'id' for offer");
         }
 
         // 2. subject -> name
         offer.setName((String) oldOffer.getOrDefault("subject", "Brak nazwy"));
 
         // 3. datecreated -> creationDate
-        //    Format w starym systemie może wyglądać na "yyyy-MM-dd HH:mm:ss".
-        //    Dla bezpieczeństwa spróbujmy sparsować i w razie błędu ustawić LocalDateTime.now().
         String dateCreatedStr = (String) oldOffer.get("datecreated");
         offer.setCreationDate(parseDate(dateCreatedStr));
 
         // 4. subtotal -> totalPrice
-        //    To jest pole w BigDecimal w nowym systemie.
-        String subtotalStr = (String) oldOffer.getOrDefault("subtotal", "0.00");
+        String subtotalStr = String.valueOf(oldOffer.getOrDefault("subtotal", "0.00"));
         offer.setTotalPrice(parseBigDecimal(subtotalStr));
 
         // 5. Zawsze ustawiamy walutę na PLN
         offer.setCurrency(Currency.PLN);
 
-        // 6. Mapowanie statusu (z pola "status" w starym JSON) -> OfferStatus
-        String oldStatus = (String) oldOffer.get("status");
+        // 6. Mapowanie statusu
+        String oldStatus = String.valueOf(oldOffer.get("status"));
         OfferStatus offerStatus = mapOldStatusToNewOfferStatus(oldStatus);
         offer.setOfferStatus(offerStatus);
 
@@ -97,27 +138,32 @@ public class OfferImportController {
 
         // 7. rel_type + rel_id -> lead lub client
         String relType = (String) oldOffer.get("rel_type");
-        String relIdStr = (String) oldOffer.get("rel_id");
+        String relIdStr = String.valueOf(oldOffer.get("rel_id"));
         Long relId = parseLongOrDefault(relIdStr, null);
 
         if ("lead".equalsIgnoreCase(relType) && relId != null) {
-            // 7a. Znajdź Lead o danym ID i przypisz do oferty
             Lead lead = leadRepository.findById(relId)
-                    .orElseThrow(() -> new NoSuchElementException("Lead not found: " + relId));
-            offer.setLead(lead);
+                    .orElse(null);
+            if (lead != null) {
+                offer.setLead(lead);
+            } else {
+                throw new NoSuchElementException("Lead not found: " + relId);
+            }
         } else if ("customer".equalsIgnoreCase(relType) && relId != null) {
-            // 7b. Znajdź Client o danym ID i przypisz do oferty
             Client client = clientRepository.findById(relId)
-                    .orElseThrow(() -> new NoSuchElementException("Client not found: " + relId));
-            offer.setClient(client);
+                    .orElse(null);
+            if (client != null) {
+                offer.setClient(client);
+            } else {
+                throw new NoSuchElementException("Client not found: " + relId);
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid rel_type or rel_id: " + relType + ", " + relIdStr);
         }
 
-        // 8. Domyślne wartości pól, których nie mamy w starym systemie
-        //    (lub mamy, ale chcemy ustawiać na "z góry" narzucone)
+        // 8. Domyślne wartości pól
         offer.setArchived(false);
         offer.setContractSigned(false);
-        // Poniżej można ustawić też np. offer.setDescription(...) jeśli było w "content",
-        // ale w zadaniu mamy je pominąć, chyba że chcesz to zmapować.
 
         // 9. customfields -> mapowanie na poszczególne pola w Offer
         List<Map<String, Object>> customFields = (List<Map<String, Object>>) oldOffer.get("customfields");
@@ -138,8 +184,12 @@ public class OfferImportController {
                     Long userId = mapUserNameToId(value);
                     if (userId != null) {
                         User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
-                        offer.setUser(user);
+                                .orElse(null);
+                        if (user != null) {
+                            offer.setUser(user);
+                        } else {
+                            throw new NoSuchElementException("User not found: " + userId);
+                        }
                     }
                 }
 
@@ -153,8 +203,6 @@ public class OfferImportController {
                 }
 
                 if ("Data podpisania umowy".equalsIgnoreCase(label)) {
-                    // Parsujemy datę - w starym systemie mogła być np. "2024-10-11"
-                    // lub puste pole. Jeśli niepuste, ustawiamy w Offer + contractSigned=true
                     if (value != null && !value.isEmpty()) {
                         offer.setSignedContractDate(parseDate(value));
                         offer.setContractSigned(true);
@@ -168,13 +216,23 @@ public class OfferImportController {
         }
 
         // 10. Mappowanie offerItems
-        //    Zakładamy, że każda oferta ma jedną pozycję z określonymi wartościami
+        // Pobieramy 'total_tax' i 'total' z oryginalnych danych
+        String totalTaxStr = String.valueOf(oldOffer.getOrDefault("total_tax", "0.00"));
+        String totalStr = String.valueOf(oldOffer.getOrDefault("total", "0.00"));
+
+        BigDecimal totalTax = parseBigDecimal(totalTaxStr);
+        BigDecimal total = parseBigDecimal(totalStr);
+
         List<OfferItem> offerItems = new ArrayList<>();
         OfferItem item = new OfferItem();
-        item.setTitle("Pozycja oferty - tutaj zawsze to samo");
-        item.setAmount(offer.getTotalPrice());
+        // Nie ustawiamy ID ręcznie, zakładamy, że jest automatycznie generowane
+        item.setTitle((String) oldOffer.getOrDefault("title", "Pozycja oferty"));
+        item.setDescription((String) oldOffer.getOrDefault("description", ""));
+        item.setAmount(total);
         item.setQuantity(1L);
-        item.setTax(Tax.valueOf("VAT_23"));
+        item.setTax(Tax.VAT_23); // Zakładam, że podatek jest stały, można to również mapować
+        item.setTaxAmount(totalTax);
+        item.setGrossAmount(total);
         item.setOffer(offer); // Powiązanie z ofertą
 
         offerItems.add(item);
@@ -316,11 +374,11 @@ public class OfferImportController {
 
     /**
      * Metoda pomocnicza do parsowania daty (yyyy-MM-dd HH:mm:ss lub yyyy-MM-dd).
-     * Jeśli nie da się sparsować – zwracamy LocalDateTime.now().
+     * Jeśli nie da się sparsować – rzuca wyjątek.
      */
     private LocalDateTime parseDate(String dateStr) {
         if (dateStr == null || dateStr.isEmpty()) {
-            return LocalDateTime.now();
+            throw new IllegalArgumentException("Date string is null or empty");
         }
         // Spróbuj najpierw wzorca z godziną
         try {
@@ -332,7 +390,7 @@ public class OfferImportController {
                 DateTimeFormatter formatterDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 return LocalDateTime.parse(dateStr + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             } catch (Exception e2) {
-                return LocalDateTime.now();
+                throw new IllegalArgumentException("Invalid date format: " + dateStr);
             }
         }
     }
@@ -343,7 +401,8 @@ public class OfferImportController {
     private BigDecimal parseBigDecimal(String value) {
         if (value == null) return BigDecimal.ZERO;
         try {
-            return new BigDecimal(value);
+            // Zamiana przecinka na kropkę, jeśli występuje
+            return new BigDecimal(value.replace(",", "."));
         } catch (NumberFormatException e) {
             return BigDecimal.ZERO;
         }

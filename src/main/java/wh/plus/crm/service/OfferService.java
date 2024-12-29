@@ -4,7 +4,9 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -40,7 +42,14 @@ public class OfferService {
     private final ProjectRepository projectRepository;
 
     public Page<OfferDTO> getOffers(Pageable pageable) {
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
         return offerRepository.findAll(pageable).map(offerMapper::toOfferDTO);
+
     }
 
     public OfferDTO getOfferById(Long id){
@@ -98,7 +107,13 @@ public class OfferService {
             specification = specification.and(OfferSpecification.createdBetween(startDate, endDate));
         }
 
-        return offerRepository.findAll(specification, pageable).map(offerMapper::toOfferDTO);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        return offerRepository.findAll(specification, sortedPageable).map(offerMapper::toOfferDTO);
     }
 
 
