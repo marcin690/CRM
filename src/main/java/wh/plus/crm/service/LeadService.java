@@ -67,7 +67,7 @@ public class LeadService {
         }
 
         Lead savedLead = leadRepository.save(lead);
-        applicationEventPublisher.publishEvent(new EntityCreatedEvent<>(this, savedLead, "Utworzono nowy lead"));
+//        applicationEventPublisher.publishEvent(new EntityCreatedEvent<>(this, savedLead, "Utworzono nowy lead"));
 
 
         return leadMapper.leadToLeadDTO(savedLead);
