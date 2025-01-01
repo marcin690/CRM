@@ -35,10 +35,25 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
+            <!-- wersję możesz pozostawić w gestii BOM-a, np. Spring Boot BOM,
+                 albo ustawić ręcznie -->
+            <version>8.0.33</version>
+        </dependency>
+
+        <!-- Moduł Flyway z obsługą MySQL -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>10.18.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>10.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

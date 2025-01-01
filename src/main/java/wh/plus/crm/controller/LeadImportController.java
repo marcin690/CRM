@@ -81,6 +81,11 @@ public class LeadImportController {
         lead.setClientZip((String) oldLead.getOrDefault("zip", ""));
         lead.setClientEmail((String) oldLead.getOrDefault("email", ""));
         lead.setClientPhone(parseLongOrDefault((String) oldLead.get("phonenumber"), 0L));
+        // Mapowanie pola "title" na clientFullName
+        lead.setClientFullName((String) oldLead.getOrDefault("title", ""));
+
+        // Mapowanie pola "company" na clientBusinessName
+        lead.setClientBusinessName((String) oldLead.getOrDefault("company", ""));
 
         // Mapowanie leadValue jako Double
         Object leadValueObj = oldLead.get("lead_value");
@@ -97,13 +102,18 @@ public class LeadImportController {
         }
 
         // Mapowanie kraju
+        // Mapowanie kraju
         String country = (String) oldLead.get("country");
-        lead.setClientCountry("176".equals(country) ? "Polska" : country);
-        lead.setClientCountry("59".equals(country) ? "Czechy" : country);
-        lead.setClientCountry("83".equals(country) ? "Niemcy" : country);
-        lead.setClientCountry("209".equals(country) ? "Hiszpania" : country);
-        lead.setClientCountry("76".equals(country) ? "Francja" : country);
-        lead.setClientCountry("15".equals(country) ? "Austria" : country);
+        Map<String, String> countryMap = new HashMap<>();
+        countryMap.put("176", "Polska");
+        countryMap.put("59", "Czechy");
+        countryMap.put("83", "Niemcy");
+        countryMap.put("209", "Hiszpania");
+        countryMap.put("76", "Francja");
+        countryMap.put("15", "Austria");
+
+        // Pobierz nazwę kraju z mapy lub pozostaw oryginalny kod, jeśli brak dopasowania
+        lead.setClientCountry(countryMap.getOrDefault(country, country));
 
 
         // Mapowanie źródła
