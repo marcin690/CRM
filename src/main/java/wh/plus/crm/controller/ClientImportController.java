@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.repository.ClientRepository;
+import wh.plus.crm.service.ClientGlobalIdService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,9 +20,11 @@ import java.util.NoSuchElementException;
 public class ClientImportController {
 
     private final ClientRepository clientRepository;
+    private final ClientGlobalIdService clientGlobalIdService;
 
-    public ClientImportController(ClientRepository clientRepository) {
+    public ClientImportController(ClientRepository clientRepository, ClientGlobalIdService clientGlobalIdService) {
         this.clientRepository = clientRepository;
+        this.clientGlobalIdService = clientGlobalIdService;
     }
 
     @PostMapping("/clients")
@@ -66,6 +69,9 @@ public class ClientImportController {
         client.setEvents(null);
         client.setOffers(null);
         client.setProjects(null);
+
+        String generatedId = clientGlobalIdService.generateClientGlobalId();
+        client.setClientGlobalId(generatedId);
 
         return client;
     }

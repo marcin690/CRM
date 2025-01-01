@@ -146,6 +146,7 @@ public class OfferImportController {
                     .orElse(null);
             if (lead != null) {
                 offer.setLead(lead);
+                offer.setClientGlobalId(lead.getClientGlobalId());
             } else {
                 throw new NoSuchElementException("Lead not found: " + relId);
             }
@@ -154,6 +155,7 @@ public class OfferImportController {
                     .orElse(null);
             if (client != null) {
                 offer.setClient(client);
+                offer.setClientGlobalId(client.getClientGlobalId());
             } else {
                 throw new NoSuchElementException("Client not found: " + relId);
             }
@@ -306,15 +308,15 @@ public class OfferImportController {
         if (salesmanName == null) return null;
         switch (salesmanName) {
             case "Grzegorz Raczek":
-                return 7L;
-            case "Rafał Hyla":
-                return 10L;
-            case "Dariusz Kwieciński":
-                return 6L;
-            case "Krystian Kwieciński":
                 return 8L;
-            case "Joanna Apryjas":
+            case "Rafał Hyla":
+                return 12L;
+            case "Dariusz Kwieciński":
+                return 7L;
+            case "Krystian Kwieciński":
                 return 9L;
+            case "Joanna Apryjas":
+                return 10L;
             case "Jagoda Szymczak":
                 return 2L;
             default:
