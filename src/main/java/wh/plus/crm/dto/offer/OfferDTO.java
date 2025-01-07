@@ -40,7 +40,8 @@ public class OfferDTO {
     private BigDecimal totalPrice;
 
 
-
+    private Long salesTeamId;
+    private String salesTeamName;
 
     private LocalDateTime rejectionOrApprovalDate;
     private LocalDateTime signedContractDate;

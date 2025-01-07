@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Currency;
 import wh.plus.crm.model.RejectionReason;
+import wh.plus.crm.model.user.SalesTeam;
 import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
@@ -29,7 +30,7 @@ import java.util.List;
 public class Offer extends Auditable<String> {
 
     @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -85,6 +86,11 @@ public class Offer extends Auditable<String> {
 
     @Column(nullable = true)
     private LocalDateTime signedContractDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sales_team_id", nullable = true)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private SalesTeam salesTeam;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

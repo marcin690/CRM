@@ -8,7 +8,7 @@ import wh.plus.crm.model.offer.OfferItem;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring",uses = {UserMapper.class, ProjectMapper.class, LeadMapper.class, ClientMapper.class})
+@Mapper(componentModel = "spring",uses = {UserMapper.class, ProjectMapper.class, LeadMapper.class, ClientMapper.class, })
 public interface OfferMapper {
 
     @Mapping(target = "offerItemList", source = "offerItems")
@@ -18,6 +18,7 @@ public interface OfferMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "euroExchangeRate", source = "euroExchangeRate") // Mapowanie kursu euro
     @Mapping(target = "clientGlobalId", source = "clientGlobalId")
+    @Mapping(target = "salesTeam.id", source = "salesTeamId")
     Offer toEntity(OfferDTO offerDTO);
 
     @Mapping(target = "offerItems", source = "offerItemList")
@@ -29,6 +30,8 @@ public interface OfferMapper {
     @Mapping(source = "clientGlobalId", target = "clientGlobalId")
     @Mapping(target = "rejectionOrApprovalDate", source = "rejectionOrApprovalDate")
     @Mapping(target = "signedContractDate", source = "signedContractDate")
+    @Mapping(target = "salesTeamId", source = "salesTeam.id")
+    @Mapping(target = "salesTeamName", source = "salesTeam.name")
     OfferDTO toOfferDTO(Offer offer);
 
     @Mapping(target = "offer", ignore = true)

@@ -56,7 +56,6 @@ public class User implements UserDetails {
     }
 
 
-
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -76,6 +75,10 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    private SalesTeam team;
 
 
 

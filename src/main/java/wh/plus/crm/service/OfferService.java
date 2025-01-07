@@ -15,6 +15,7 @@ import wh.plus.crm.dto.offer.OfferItemDTO;
 import wh.plus.crm.helper.NullPropertyUtils;
 import wh.plus.crm.mapper.OfferMapper;
 import wh.plus.crm.model.Currency;
+import wh.plus.crm.model.user.SalesTeam;
 import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.lead.Lead;
@@ -40,6 +41,7 @@ public class OfferService {
     private final LeadRepository leadRepository;
     private final ClientRepository clientRepository;
     private final ProjectRepository projectRepository;
+    private final SalesTeamRepository salesTeamRepository;
 
     public Page<OfferDTO> getOffers(Pageable pageable) {
 
@@ -62,7 +64,7 @@ public class OfferService {
     public Page<OfferDTO> searchOffers(
             String createdBy, String name, ClientType clientType, InvestorType investorType,
             OfferStatus offerStatus, ObjectType objectType, String description, Long userId,
-            Long clientId, Long leadId, Long projectId, LocalDateTime startDate,
+            Long clientId, Long leadId, Long projectId, Long salesTeamId, LocalDateTime startDate,
             LocalDateTime endDate, SalesOpportunityLevel salesOpportunityLevel, Pageable pageable) {
 
         Specification<Offer> specification = Specification.where(null);
@@ -99,6 +101,9 @@ public class OfferService {
         }
         if (projectId != null) {
             specification = specification.and(OfferSpecification.hasProject(projectId));
+        }
+        if (salesTeamId != null) {
+            specification = specification.and(OfferSpecification.hasSalesTeam(salesTeamId));
         }
         if (salesOpportunityLevel != null) {
             specification = specification.and(OfferSpecification.hasSalesOpportunityLevel(salesOpportunityLevel));
@@ -168,6 +173,12 @@ public class OfferService {
             Project project = projectRepository.findById(offerDTO.getProject().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Project not found"));
             offer.setProject(project);
+        }
+
+        if (offerDTO.getSalesTeamId() != null) {
+            SalesTeam salesTeam = salesTeamRepository.findById(offerDTO.getSalesTeamId())
+                    .orElseThrow(() -> new IllegalArgumentException("Sales Team not found"));
+            offer.setSalesTeam(salesTeam);
         }
 
         // Ustawienie clientGlobalId

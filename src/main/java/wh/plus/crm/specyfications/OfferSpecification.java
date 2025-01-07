@@ -35,6 +35,10 @@ public class OfferSpecification {
         return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("description"), "%" + description + "%");
     }
 
+    public static Specification<Offer> hasSalesTeam(Long salesTeamId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("salesTeam").get("id"), salesTeamId);
+    }
+
     public static Specification<Offer> hasUser(Long userId) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("user").get("id"), userId);

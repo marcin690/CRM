@@ -8,6 +8,7 @@ import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.RejectionReason;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -20,7 +21,7 @@ public class LeadDTO {
 
     private String clientGlobalId;
     private boolean isFinal;
-    private OfferSummaryDTO offer;
+    private List<OfferSummaryDTO> offers;
 
     private RejectionReason rejectionReason;
     private String rejectionReasonComment;

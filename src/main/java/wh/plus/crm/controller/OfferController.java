@@ -56,6 +56,7 @@ public class OfferController {
             @RequestParam(required = false) Long projectId,
             @RequestParam(required = false) Long leadId,
             @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) Long salesTeamId, // Dodany parametr
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(required = false) SalesOpportunityLevel salesOpportunityLevel,
@@ -64,15 +65,15 @@ public class OfferController {
     ) {
 
         Page<OfferDTO> offers = offerService.searchOffers(
-                 createdBy,  name,  clientType,  investorType,  offerStatus,  objectType,  description,  userId,  clientId,  leadId,  projectId,
-                 startDate,  endDate,  salesOpportunityLevel, pageable
+                createdBy, name, clientType, investorType, offerStatus, objectType, description,
+                userId, clientId, leadId, projectId, salesTeamId, startDate, endDate, salesOpportunityLevel, pageable
         );
 
-        // Tworzenie modelu HATEOAS
         PagedModel<EntityModel<OfferDTO>> pagedModel = assembler.toModel(offers);
 
         return ResponseEntity.ok(pagedModel);
     }
+
 
 
 

@@ -24,6 +24,7 @@ public interface LeadMapper {
     @Mapping(source = "clientGlobalId", target = "clientId")
     @Mapping(source = "leadStatus.id", target = "leadStatusId")
     @Mapping(source = "leadSource.id", target = "leadSourceId")
+    @Mapping(source = "offers", target = "offers")
     LeadDTO leadToLeadDTO(Lead lead);
 
     LeadSummaryDTO toLeadSummaryDTO(Lead lead);
