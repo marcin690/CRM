@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.EntityModel;
@@ -37,7 +39,7 @@ public class LeadController {
 
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<LeadDTO>>> findAll(
-            Pageable pageable,
+            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime toDate,
             @RequestParam(required = false) String employee,
@@ -49,6 +51,7 @@ public class LeadController {
         PagedModel<EntityModel<LeadDTO>> pagedModel = assembler.toModel(leads);
         return new ResponseEntity<>(pagedModel, HttpStatus.OK);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<LeadDTO> getLeadById(@PathVariable Long id) {

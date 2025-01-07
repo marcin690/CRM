@@ -12,4 +12,5 @@ public class OfferSummaryDTO {
     private Long id;
     private String name;
     private OfferStatus offerStatus;
+
 }
