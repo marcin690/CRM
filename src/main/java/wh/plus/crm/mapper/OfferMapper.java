@@ -32,6 +32,7 @@ public interface OfferMapper {
     @Mapping(target = "signedContractDate", source = "signedContractDate")
     @Mapping(target = "salesTeamId", source = "salesTeam.id")
     @Mapping(target = "salesTeamName", source = "salesTeam.name")
+    @Mapping(target = "totalPrice", source = "totalPrice")
     OfferDTO toOfferDTO(Offer offer);
 
     @Mapping(target = "offer", ignore = true)
