@@ -47,7 +47,7 @@ public interface ClientMapper {
             return Collections.emptyList();
         }
         return offers.stream()
-                .map(offer -> new OfferSummaryDTO(offer.getId(), offer.getName(), offer.getOfferStatus()))
+                .map(offer -> new OfferSummaryDTO(offer.getId(), offer.getName(), offer.getOfferStatus(), offer.getTotalPrice()))
                 .collect(Collectors.toList());
     }
 

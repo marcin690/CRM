@@ -85,20 +85,21 @@ public class LeadService {
         return leadMapper.leadToLeadDTO(updatedLead);
     }
 
-    public Page<LeadDTO> getLeads(Pageable pageable, LocalDateTime fromDate, LocalDateTime toDate, String employee, Long status, String search ){
+    public Page<LeadDTO> getLeads(Pageable pageable, LocalDateTime fromDate, LocalDateTime toDate, String employee, Long status, String search) {
         logger.debug("Parametry wejściowe - fromDate: {}, toDate: {}, employee: {}, status: {}, search: {}", fromDate, toDate, employee, status, search);
 
+        // Sprawdzenie, czy pageSize został przekazany jako 0 (co oznacza: pobierz wszystkie)
+        if (pageable.getPageSize() == 0) {
+            pageable = PageRequest.of(0, Integer.MAX_VALUE, pageable.getSort());
+        }
+
+        // Jeśli brak filtrów, po prostu zwracamy wszystkie rekordy
         if (fromDate == null && toDate == null && employee == null && status == null && (search == null || search.isEmpty())) {
-            // Tworzymy domyślny Pageable
-            Pageable defaultPageable = PageRequest.of(
-                    pageable.getPageNumber(),
-                    25,
-                    Sort.by("id").descending()
-            );
-            return leadRepository.findAll(defaultPageable)
+            return leadRepository.findAll(pageable)
                     .map(leadMapper::leadToLeadDTO);
         }
 
+        // Użycie kryteriów filtrujących
         Page<Lead> filteredLeads = leadRepository.findLeadsByCriteria(pageable, fromDate, toDate, employee, status, search);
         return filteredLeads.map(leadMapper::leadToLeadDTO);
     }
