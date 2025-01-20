@@ -10,6 +10,10 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Contact;
 import wh.plus.crm.model.client.Client;
+import wh.plus.crm.model.offer.Offer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -28,10 +32,15 @@ public class Project extends Auditable<String> {
     @JoinColumn(name = "client_id")
     private Client client;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private List<Offer> offers = new ArrayList<>();
+
+
     private Long roomQuantity, projectNetValue;
 
     // Czy jest etapowy
-    private boolean isStage;
+    private boolean isStage, isSimple;
 
     @ManyToOne
     @JoinColumn(name = "contact_id")

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonIgnoreProperties({
-        "password", "roles", "authorities", "phone",
+         "roles", "authorities", "phone",
         "enabled", "salesRepresentative", "accountNonExpired",
         "accountNonLocked", "credentialsNonExpired"
 })
