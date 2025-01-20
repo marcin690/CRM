@@ -36,7 +36,13 @@ public class UserService implements UserDetailsService {
     }
 
     public User saveUser(User user) {
+
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+        }
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         Set<Role> roles = new HashSet<>();
         for (Role role : user.getRoles()) {
             Role savedRole = roleRepository.findByName(role.getName())
@@ -46,6 +52,7 @@ public class UserService implements UserDetailsService {
         user.setRoles(roles);
         return userRepository.save(user);
     }
+
 
     public List<UserDTO> findAllUsers() {
         return userRepository.findAll().stream()
@@ -60,6 +67,12 @@ public class UserService implements UserDetailsService {
         } else {
             return principal.toString();
         }
+    }
+
+    public void resetPassword(String username, String newPassword) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
 

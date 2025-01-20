@@ -27,6 +27,22 @@ public class OfferSpecification {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("offerStatus"), offerStatus);
     }
 
+    public static Specification<Offer> hasArchivedFilter(String archivedFilter) {
+        return (root, query, criteriaBuilder) -> {
+            if (archivedFilter == null || archivedFilter.equalsIgnoreCase("exclude")) {
+                return criteriaBuilder.isFalse(root.get("isArchived"));
+            } else if (archivedFilter.equalsIgnoreCase("only")) {
+                return criteriaBuilder.isTrue(root.get("isArchived"));
+            } else if (archivedFilter.equalsIgnoreCase("include")) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return criteriaBuilder.conjunction();
+            }
+        };
+    }
+
+
+
     public static Specification<Offer> hasObjectType(ObjectType objectType){
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("objectType"), objectType);
     }

@@ -65,7 +65,7 @@ public class OfferService {
             String createdBy, String name, ClientType clientType, InvestorType investorType,
             OfferStatus offerStatus, ObjectType objectType, String description, Long userId,
             Long clientId, Long leadId, Long projectId, Long salesTeamId, LocalDateTime startDate,
-            LocalDateTime endDate, SalesOpportunityLevel salesOpportunityLevel, Pageable pageable) {
+            LocalDateTime endDate, SalesOpportunityLevel salesOpportunityLevel, String archivedFilter, Pageable pageable) {
 
         Specification<Offer> specification = Specification.where(null);
 
@@ -110,6 +110,10 @@ public class OfferService {
         }
         if (startDate != null && endDate != null) {
             specification = specification.and(OfferSpecification.createdBetween(startDate, endDate));
+        }
+
+        if (archivedFilter != null) {
+            specification = specification.and(OfferSpecification.hasArchivedFilter(archivedFilter));
         }
 
         Pageable sortedPageable = PageRequest.of(
