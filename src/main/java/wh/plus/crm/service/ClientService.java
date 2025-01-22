@@ -2,7 +2,9 @@ package wh.plus.crm.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.client.ClientDTO;
@@ -30,8 +32,13 @@ public class ClientService {
 
     // pobranie wszystkich klientów wraz z paginacja
     public Page<ClientDTO> getClients(Pageable pageable){
-        Page<Client> clientPage = clientRepository.findAll(pageable);
-        return clientPage.map(clientMapper::clientToClientDTO);
+       Pageable sortedPageable = PageRequest.of(
+               pageable.getPageNumber(),
+               pageable.getPageSize(),
+               Sort.by(Sort.Direction.DESC, "id")
+       );
+
+       return clientRepository.findAll(sortedPageable).map(clientMapper::clientToClientDTO);
     }
 
     public Page<ClientDTO> searchClients(String fullName, String businessName, String email, Long phone, Long vatNumber, Pageable pageable) {
