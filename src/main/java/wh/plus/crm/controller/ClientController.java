@@ -23,6 +23,7 @@ public class ClientController {
     public ResponseEntity<PagedModel<EntityModel<ClientDTO>>> getClients(
             Pageable pageable,
             @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "id,desc") String sort,
             PagedResourcesAssembler<ClientDTO> assembler
     ) {
         Page<ClientDTO> clientsPage;
