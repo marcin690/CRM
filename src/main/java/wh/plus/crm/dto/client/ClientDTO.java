@@ -30,7 +30,7 @@ public class ClientDTO {
     private List<ContactDTO> contacts;
     private List<EventDTO> events;
     private List<OfferSummaryDTO> offers;
-    private List<ProjectSummaryDTO> projects;
+    private final List<ProjectSummaryDTO> projects;
 
     private String createdBy;
     private String lastModifiedBy;

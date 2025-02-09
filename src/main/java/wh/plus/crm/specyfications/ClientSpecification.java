@@ -6,7 +6,8 @@ import wh.plus.crm.model.client.Client;
 public class ClientSpecification {
 
     public static Specification<Client> hasClientType(String clientType) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("clientType"), clientType);
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("clientType"), clientType);
     }
 
     public static Specification<Client> hasClientFullName(String fullName){
@@ -17,14 +18,27 @@ public class ClientSpecification {
                 );
     }
 
+    // Poprawiona metoda, aby wyszukiwać częściowo po polu clientBusinessName
+    public static Specification<Client> hasClientBusinessName(String businessName) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("clientBusinessName")),
+                        "%" + businessName.toLowerCase() + "%"
+                );
+    }
 
-    public static Specification<Client> hasClientBusinessName(String businessName){
-        return (root, query, criteriaBuilder) ->  criteriaBuilder.equal(root.get("clientBusinessName"), businessName);
+    // Metoda sprawdzająca czy imię i nazwisko LUB nazwa firmy zawiera dany fragment
+    public static Specification<Client> hasNameOrBusinnesLike(String text) {
+        return hasClientFullName(text)
+                .or(hasClientBusinessName(text));
     }
 
     public static Specification<Client> hasClientEmail(String email) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("clientEmail")), "%" + email.toLowerCase() + "%");
+                criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("clientEmail")),
+                        "%" + email.toLowerCase() + "%"
+                );
     }
 
     public static Specification<Client> hasClientPhone(Long phone) {
@@ -36,8 +50,5 @@ public class ClientSpecification {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("vatNumber"), vatNumber);
     }
-
-
-
 
 }

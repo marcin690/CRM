@@ -19,7 +19,7 @@ public interface LeadMapper {
     @Mapping(source = "lastModifiedDate", target = "lastModifiedDate")
     @Mapping(target = "leadStatus", ignore = true)
     @Mapping(target = "leadSource", ignore = true)
-    Lead leadDTOtoLead(LeadDTO leadDTO, @Context LeadStatusRepository leadStatusRepository);
+    Lead leadDTOtoLead(LeadDTO leadDTO, @Context LeadStatusRepository leadStatusRepository, @Context LeadSourceRepository leadSourceRepository);
 
     @Mapping(source = "clientGlobalId", target = "clientId")
     @Mapping(source = "leadStatus.id", target = "leadStatusId")

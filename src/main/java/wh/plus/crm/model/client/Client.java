@@ -53,8 +53,8 @@ public class Client extends Auditable<String>   {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private List<Event> events;
 
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED) // Wyłącza audytowanie tej relacji
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = false)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private List<Offer> offers;
 
 

@@ -1,6 +1,7 @@
 package wh.plus.crm.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,11 +9,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import wh.plus.crm.dto.client.ClientDTO;
+import wh.plus.crm.helper.NullPropertyUtils;
 import wh.plus.crm.mapper.ClientMapper;
 import wh.plus.crm.model.client.Client;
+import wh.plus.crm.model.offer.Offer;
 import wh.plus.crm.repository.ClientRepository;
 import wh.plus.crm.specyfications.ClientSpecification;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -41,7 +45,7 @@ public class ClientService {
        return clientRepository.findAll(sortedPageable).map(clientMapper::clientToClientDTO);
     }
 
-    public Page<ClientDTO> searchClients(String fullName, String businessName, String email, Long phone, Long vatNumber, Pageable pageable) {
+    public Page<ClientDTO> searchClients(String fullName, String businessName, String email, Long phone, Long vatNumber, String searchLike, Pageable pageable) {
         Specification<Client> spec = Specification.where(null);
 
         if (fullName != null && !fullName.isEmpty()) {
@@ -60,6 +64,10 @@ public class ClientService {
             spec = spec.and(ClientSpecification.hasVatNumber(vatNumber));
         }
 
+        if(searchLike != null) {
+            spec = spec.and(ClientSpecification.hasNameOrBusinnesLike(searchLike));
+        }
+
         Page<Client> clients = clientRepository.findAll(spec, pageable);
         return clients.map(clientMapper::clientToClientDTO);
 
@@ -74,12 +82,24 @@ public class ClientService {
 
     // zaktualizowanie klienta
     public ClientDTO updateClient(Long clientId, ClientDTO clientDTO) {
-        Client client = clientRepository.findById(clientId)
+        Client existingClient = clientRepository.findById(clientId)
                 .orElseThrow(() -> new NoSuchElementException("Client not found"));
 
-        clientMapper.updateClientFromDTO(clientDTO, client);
-        client = clientRepository.save(client);
-        return clientMapper.clientToClientDTO(client);
+        List<Offer> existingOffers = existingClient.getOffers();
+
+
+        String[] nullPropertyNames = NullPropertyUtils.getNullPropertyNames(clientDTO);
+        BeanUtils.copyProperties(clientDTO, existingClient, nullPropertyNames);
+
+        existingClient.setOffers(existingOffers);
+
+
+        clientDTO.setOffers(clientMapper.mapOffersToSummary(existingClient.getOffers()));
+
+
+        clientMapper.updateClientFromDTO(clientDTO, existingClient);
+        existingClient = clientRepository.save(existingClient);
+        return clientMapper.clientToClientDTO(existingClient);
     }
 
     // usuniecie klienta

@@ -40,10 +40,11 @@ public class ClientController {
             @RequestParam(required = false) String clientEmail,
             @RequestParam(required = false) Long clientPhone,
             @RequestParam(required = false) Long vatNumber,
+            @RequestParam(required = false) String searchLike,
             Pageable pageable,
             PagedResourcesAssembler<ClientDTO> assembler
     ) {
-        Page<ClientDTO> clientsPage = clientService.searchClients(clientFullName, clientBusinessName, clientEmail, clientPhone, vatNumber, pageable);
+        Page<ClientDTO> clientsPage = clientService.searchClients(clientFullName, clientBusinessName, clientEmail, clientPhone, vatNumber, searchLike, pageable);
         PagedModel<EntityModel<ClientDTO>> pagedModel = assembler.toModel(clientsPage);
         return new ResponseEntity<>(pagedModel, HttpStatus.OK);
     }
@@ -55,6 +56,7 @@ public class ClientController {
     }
 
     @PostMapping
+
     public ClientDTO createClient(@RequestBody ClientDTO clientDTO) {
         return clientService.addClient(clientDTO);
     }

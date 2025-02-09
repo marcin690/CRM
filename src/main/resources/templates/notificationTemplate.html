@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Powiadomienia</title>
+    <style>
+        /* Opcjonalne style CSS dla lepszej prezentacji */
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+        }
+        h2 {
+            color: #2a7ae2;
+        }
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        a {
+            text-decoration: none;
+            color: #2a7ae2;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h2>Masz nowe powiadomienia</h2>
+<ul>
+    <!-- Dla każdego elementu z listy 'items' generowany jest element listy -->
+    <li th:each="item : ${items}">
+        <!-- 'item.url' oraz 'item.title' to dynamiczne wartości przekazane do szablonu -->
+        <a th:href="${item.url}" th:text="${item.title}"></a>
+    </li>
+</ul>
+<p>
+    Powiadomienia wygenerowane: <span th:text="${generationTime}">data generowania</span>
+</p>
+</body>
+</html>

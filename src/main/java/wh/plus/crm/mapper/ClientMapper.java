@@ -30,6 +30,7 @@ public interface ClientMapper {
 
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "offers", ignore = true)
     void updateClientFromDTO(ClientDTO clientDTO, @MappingTarget Client client);
 
 

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${subject}">Powiadomienie</title>
+    <style>
+        /* Opcjonalnie: dodaj style CSS */
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+<h1 th:text="${headline}">Nagłówek powiadomienia</h1>
+<p th:text="${content}">Treść powiadomienia</p>
+<!-- Możesz dodać dodatkowe sekcje, np. przyciski, linki, stopkę -->
+<footer>
+    <p>Powiadomienie wysłane z systemu CRM.</p>
+</footer>
+</body>
+</html>

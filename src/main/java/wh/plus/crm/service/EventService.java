@@ -9,9 +9,14 @@ import wh.plus.crm.helper.NullPropertyUtils;
 import wh.plus.crm.mapper.EventMapper;
 import wh.plus.crm.model.Event;
 import wh.plus.crm.model.client.Client;
+import wh.plus.crm.model.notification.CycleType;
+import wh.plus.crm.model.notification.Notification;
+import wh.plus.crm.model.notification.NotificationType;
+import wh.plus.crm.model.user.User;
 import wh.plus.crm.repository.ClientRepository;
 import wh.plus.crm.repository.EventRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -27,6 +32,7 @@ public class EventService {
     private final EventRepository eventRepository; // Repozytorium do dostępu do danych wydarzeń w bazie danych.
     private final EventMapper eventMapper; // Mapper do konwersji obiektów Event na EventDTO i odwrotnie.
     private final ClientRepository clientRepository;
+    private final NotificationService notificationService;
 
     /**
      * Pobiera listę wydarzeń powiązanych z określonym identyfikatorem klienta.
@@ -70,6 +76,24 @@ public class EventService {
         }
 
         Event savedEvent = eventRepository.save(event); // Zapisuje wydarzenie w bazie danych.
+
+        //dodanie powiadomieia
+        String content = "Masz przypomnienie o wydarzeniu: " + eventDTO.getComment();
+        boolean cyclic = eventDTO.getCyclic() != null && eventDTO.getCyclic();
+        CycleType cycleType = eventDTO.getCycleType();
+        boolean sendEmail = true;
+        boolean sendSms = eventDTO.getSendSms() != null && eventDTO.getSendSms();
+
+        notificationService.scheduleNotification(
+                savedEvent.getId().toString(),
+                content,
+                eventDTO.getCycleType(),
+                eventDTO.getRecipientIds(),
+                eventDTO.getSendEmail() != null && eventDTO.getSendEmail(),
+                eventDTO.getSendSms() != null && eventDTO.getSendSms(),
+                eventDTO.getDate()
+        );
+
         return eventMapper.eventToEventDTO(savedEvent); // Konwertuje zapisane wydarzenie z powrotem na EventDTO.
     }
 
