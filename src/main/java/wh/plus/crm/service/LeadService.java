@@ -42,7 +42,7 @@ public class LeadService {
     private final OfferRepository offerRepository;
 
 
-    private final NotificationService notificationService;
+
 
     @Transactional
     public List<LeadDTO> findAll() {
@@ -60,7 +60,7 @@ public class LeadService {
 
     @Transactional
     public LeadDTO save(LeadDTO leadDTO) {
-        Lead lead = leadMapper.leadDTOtoLead(leadDTO,leadStatusRepository);
+        Lead lead = leadMapper.leadDTOtoLead(leadDTO,leadStatusRepository,leadSourceRepository);
 
         if(lead.getClientGlobalId() == null || lead.getClientGlobalId().isEmpty()) {
             lead.setClientGlobalId(clientGlobalIdService.generateClientGlobalId());
@@ -130,9 +130,13 @@ public class LeadService {
         leadRepository.deleteAllById(ids);
     }
 
-    public Client convertLeadToClient(Long leadId){
-        Lead lead = leadRepository.findById(leadId).orElseThrow(() -> new EntityNotFoundException("Lead not found with ID: " + leadId));
+    @Transactional
+    public Client convertLeadToClient(Long leadId) {
+        // Pobranie leada z bazy
+        Lead lead = leadRepository.findById(leadId)
+                .orElseThrow(() -> new EntityNotFoundException("Lead not found with ID: " + leadId));
 
+        // Tworzymy nowego klienta, kopiując dane z leada
         Client client = new Client();
         client.setClientBusinessName(lead.getClientBusinessName());
         client.setClientAdress(lead.getClientAdress());
@@ -144,18 +148,31 @@ public class LeadService {
         client.setClientPhone(lead.getClientPhone());
         client.setVatNumber(lead.getVatNumber());
         client.setClientNotes("Converted from Lead ID: " + leadId);
+        // Ustaw globalne ID z leada
+        client.setClientGlobalId(lead.getClientGlobalId());
         clientRepository.save(client);
 
-        LeadStatus leadStatus = leadStatusRepository.findByStatusName("CLIENT").orElseThrow(() -> new IllegalArgumentException("LeadStatus 'CLIENT' not found"));
+        // Przypisanie ofert z leada do klienta
+        if (lead.getOffers() != null && !lead.getOffers().isEmpty()) {
+            for (Offer offer : lead.getOffers()) {
+                // Ustawiamy nowego klienta dla oferty
+                offer.setClient(client);
+                // Opcjonalnie: zerujemy powiązanie z leadem, jeśli już nie jest potrzebne
+                offer.setLead(null);
+                offerRepository.save(offer);
+            }
+        }
 
-
+        // Aktualizacja statusu leada
+        LeadStatus leadStatus = leadStatusRepository.findByStatusName("CLIENT")
+                .orElseThrow(() -> new IllegalArgumentException("LeadStatus 'CLIENT' not found"));
 
         lead.setFinal(true);
         lead.setLeadStatus(leadStatus);
         leadRepository.save(lead);
 
         return client;
-
     }
+
 
 }

@@ -11,4 +11,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findById(Long id);
     void deleteAllByIdIn(List<Long> ids);
     List<User> findByIsSalesRepresentativeTrue();
+
+    List<User> findByIdIn(List<Long> userIds);
 }
