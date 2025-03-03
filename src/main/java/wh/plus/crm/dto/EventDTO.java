@@ -20,6 +20,8 @@ public class EventDTO {
     private Long clientId;
     private Long projectId;
 
+    private LocalDateTime cycleEndDate;
+
     private Boolean cyclic;       // true, jeśli powiadomienie ma być cykliczne
     private CycleType cycleType;  // typ cykliczności: DAILY, WEEKLY, itp.
     private Boolean sendEmail;    // czy wysłać e-mail

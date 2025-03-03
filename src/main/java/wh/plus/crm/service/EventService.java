@@ -12,10 +12,13 @@ import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.notification.CycleType;
 import wh.plus.crm.model.notification.Notification;
 import wh.plus.crm.model.notification.NotificationType;
+import wh.plus.crm.model.project.Project;
 import wh.plus.crm.model.user.User;
 import wh.plus.crm.repository.ClientRepository;
 import wh.plus.crm.repository.EventRepository;
+import wh.plus.crm.repository.ProjectRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,6 +36,7 @@ public class EventService {
     private final EventMapper eventMapper; // Mapper do konwersji obiektów Event na EventDTO i odwrotnie.
     private final ClientRepository clientRepository;
     private final NotificationService notificationService;
+
 
     /**
      * Pobiera listę wydarzeń powiązanych z określonym identyfikatorem klienta.
@@ -67,13 +71,22 @@ public class EventService {
      * @return stworzony obiekt EventDTO, zawierający dane wydarzenia po zapisaniu w bazie danych.
      */
     public EventDTO createEvent(EventDTO eventDTO){
+
+        String relatedEntityName = "";
+
         Event event = eventMapper.eventDTOTOEvent(eventDTO); // Konwertuje EventDTO na obiekt Event.
 
         if (eventDTO.getClientId() != null){
             Client client = clientRepository.findById(eventDTO.getClientId())
                     .orElseThrow(() -> new NoSuchElementException("Cliect not found"));
             event.setClient(client);
+            relatedEntityName = "Klient: " + client.getClientBusinessName(); // Pobranie nazwy klienta
         }
+
+        //dodać projekt
+
+        event.setComment(eventDTO.getComment() + " - " + relatedEntityName);
+
 
         Event savedEvent = eventRepository.save(event); // Zapisuje wydarzenie w bazie danych.
 
@@ -133,6 +146,68 @@ public class EventService {
         Event updatedEvent = eventRepository.save(event); // Zapisuje zaktualizowane wydarzenie w bazie danych.
         return eventMapper.eventToEventDTO(updatedEvent); // Konwertuje zaktualizowane wydarzenie na EventDTO.
     }
+
+    public List<EventDTO> getVirtualEvents(LocalDateTime from, LocalDateTime to) {
+        List<Event> events = eventRepository.findEventsInRange(from, to);
+        List<EventDTO> result = new ArrayList<>();
+
+        for (Event event : events) {
+            if (event.getCycleType() == null || event.getCycleType() == CycleType.NONE) {
+                // Jednorazowe wydarzenie - dodajemy normalnie
+                if (!event.getDate().isBefore(from) && !event.getDate().isAfter(to)) {
+                    result.add(eventMapper.eventToEventDTO(event));
+                }
+            } else {
+                // Cykliczne wydarzenia - generujemy kopie w podanym zakresie
+                LocalDateTime nextEventDate = event.getDate();
+
+                while (nextEventDate.isBefore(to)) {
+                    if (!nextEventDate.isBefore(from)) {
+                        EventDTO virtualEvent = eventMapper.eventToEventDTO(event);
+                        virtualEvent.setId(null); // Virtualne eventy nie mają unikalnego ID
+                        virtualEvent.setDate(nextEventDate);
+                        result.add(virtualEvent);
+                    }
+
+                    // Warunek zatrzymania, jeśli event ma cycleEndDate i już ją przekroczył
+                    if (event.getCycleEndDate() != null && nextEventDate.isAfter(event.getCycleEndDate())) {
+                        break;
+                    }
+
+                    nextEventDate = getNextCycleDate(nextEventDate, event.getCycleType());
+
+                    // Zabezpieczenie przed nieskończoną pętlą
+                    if (nextEventDate.equals(event.getDate())) {
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+
+
+    private LocalDateTime getNextCycleDate(LocalDateTime currentDate, CycleType cycleType) {
+        if (cycleType == null) {
+            return currentDate; // Brak cykliczności - zwracamy tę samą datę
+        }
+
+        switch (cycleType) {
+            case DAILY:
+                return currentDate.plusDays(1);
+            case WEEKLY:
+                return currentDate.plusWeeks(1);
+            case MONTHLY:
+                return currentDate.plusMonths(1);
+            case YEARLY:
+                return currentDate.plusYears(1);
+            default:
+                return currentDate;
+        }
+    }
+
+
 
     /**
      * Usuwa wydarzenie o podanym identyfikatorze.

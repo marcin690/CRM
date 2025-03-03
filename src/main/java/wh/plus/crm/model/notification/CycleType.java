@@ -5,5 +5,6 @@ public enum CycleType {
     DAILY,
     WEEKLY,
     MONTHLY,
-    YEARLY
+    YEARLY,
+    NONE
 }
