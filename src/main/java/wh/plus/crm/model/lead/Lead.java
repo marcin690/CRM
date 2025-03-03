@@ -33,24 +33,19 @@ public class Lead extends Auditable<String>  {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     @Column(unique = true)
     private String clientGlobalId;
-
 
     private boolean isFinal;
 
     @Version
     private int version;
 
-
     @Column(nullable = true)
     @Enumerated(EnumType.STRING)
     private RejectionReason rejectionReason;
 
     private String rejectionReasonComment;
-
-
 
     @ManyToOne
     @JoinColumn(name = "user_id")

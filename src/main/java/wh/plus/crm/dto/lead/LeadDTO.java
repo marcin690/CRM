@@ -38,7 +38,8 @@ public class LeadDTO {
     private String leadRejectedReasonComment;
     private Long leadSourceId;
 
-    private String clientFullName, clientBusinessName, clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
+    private String clientFullName, clientBusinessName,
+            clientAdress, clientCity, clientState, clientZip, clientCountry, clientEmail;
 
     private Long clientPhone, vatNumber;
 

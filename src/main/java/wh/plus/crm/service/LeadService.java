@@ -141,6 +141,7 @@ public class LeadService {
         client.setClientBusinessName(lead.getClientBusinessName());
         client.setClientAdress(lead.getClientAdress());
         client.setClientCity(lead.getClientCity());
+        client.setClientFullName(lead.getClientFullName());
         client.setClientState(lead.getClientState());
         client.setClientZip(lead.getClientZip());
         client.setClientCountry(lead.getClientCountry());

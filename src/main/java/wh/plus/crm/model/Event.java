@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 import wh.plus.crm.model.client.Client;
+import wh.plus.crm.model.notification.CycleType;
 import wh.plus.crm.model.project.Project;
 
 import java.time.LocalDateTime;
@@ -41,6 +43,14 @@ public class Event extends Auditable<String>  {
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
+
+    @Enumerated(EnumType.STRING)
+    private CycleType cycleType = CycleType.YEARLY;
+
+    @Column
+    private LocalDateTime cycleEndDate;
+
+
 
 
 
