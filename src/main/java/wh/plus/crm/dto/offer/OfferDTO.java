@@ -39,6 +39,8 @@ public class OfferDTO {
     private BigDecimal euroExchangeRate;
     private BigDecimal totalPrice;
 
+    private Boolean rejectLinkedLead;
+    private Long rejectLeadStatusId;
 
     private Long salesTeamId;
     private String salesTeamName;

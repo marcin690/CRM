@@ -19,12 +19,14 @@
         @Mapping(source = "lastModifiedDate", target = "lastModifiedDate")
         @Mapping(target = "leadStatus", ignore = true)
         @Mapping(target = "leadSource", ignore = true)
+        @Mapping(source = "clientType", target = "clientType")
         Lead leadDTOtoLead(LeadDTO leadDTO, @Context LeadStatusRepository leadStatusRepository, @Context LeadSourceRepository leadSourceRepository);
 
         @Mapping(source = "clientGlobalId", target = "clientId")
         @Mapping(source = "leadStatus.id", target = "leadStatusId")
         @Mapping(source = "leadSource.id", target = "leadSourceId")
         @Mapping(source = "offers", target = "offers")
+        @Mapping(source = "clientType", target = "clientType")
         LeadDTO leadToLeadDTO(Lead lead);
 
         LeadSummaryDTO toLeadSummaryDTO(Lead lead);

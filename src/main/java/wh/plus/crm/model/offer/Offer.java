@@ -35,6 +35,23 @@ public class Offer extends Auditable<String> {
 
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "lead_id", nullable = true)
+    private Lead lead;
+
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private Client client;
+
+    @Column(nullable = true, precision = 19, scale = 2)
+    private BigDecimal totalPrice;
+
+    @Column(nullable = true, precision = 19, scale = 2)
+    private BigDecimal totalPriceInEUR; // W euro
+
+    @Column(nullable = true, precision = 19, scale = 4)
+    private BigDecimal euroExchangeRate;
+
     @Column(nullable = true)
     private String approvalReason, rejectionReasonComment;
 
@@ -72,14 +89,7 @@ public class Offer extends Auditable<String> {
     @Enumerated(EnumType.STRING)
     private SalesOpportunityLevel salesOpportunityLevel;
 
-    @Column(nullable = true, precision = 19, scale = 2)
-    private BigDecimal totalPrice;
 
-    @Column(nullable = true, precision = 19, scale = 2)
-    private BigDecimal totalPriceInEUR; // W euro
-
-    @Column(nullable = true, precision = 19, scale = 4)
-    private BigDecimal euroExchangeRate;
 
     @Column(nullable = true)
     private LocalDateTime rejectionOrApprovalDate;
@@ -108,14 +118,7 @@ public class Offer extends Auditable<String> {
     private Project project;
 
 
-   @ManyToOne
-   @JoinColumn(name = "lead_id", nullable = true)
-   private Lead lead;
 
-
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
 
 
 }
