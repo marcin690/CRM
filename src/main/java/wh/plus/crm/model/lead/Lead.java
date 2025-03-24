@@ -47,6 +47,10 @@ public class Lead extends Auditable<String>  {
 
     private String rejectionReasonComment;
 
+
+    @Enumerated(EnumType.STRING)
+    private ClientType clientType;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

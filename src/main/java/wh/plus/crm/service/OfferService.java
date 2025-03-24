@@ -15,6 +15,7 @@ import wh.plus.crm.dto.offer.OfferItemDTO;
 import wh.plus.crm.helper.NullPropertyUtils;
 import wh.plus.crm.mapper.OfferMapper;
 import wh.plus.crm.model.Currency;
+import wh.plus.crm.model.lead.LeadStatus;
 import wh.plus.crm.model.user.SalesTeam;
 import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.client.Client;
@@ -42,6 +43,7 @@ public class OfferService {
     private final ClientRepository clientRepository;
     private final ProjectRepository projectRepository;
     private final SalesTeamRepository salesTeamRepository;
+    private final LeadStatusRepository leadStatusRepository;
 
     public Page<OfferDTO> getOffers(Pageable pageable) {
 
@@ -226,6 +228,23 @@ public class OfferService {
         }
         if (offerDTO.getSalesOpportunityLevel() == null) {
             existingOffer.setSalesOpportunityLevel(null);
+        }
+
+        if (Boolean.TRUE.equals(offerDTO.getRejectLinkedLead())
+                && offerDTO.getLead() != null
+                && offerDTO.getRejectionReason() != null) {
+
+            Lead lead = leadRepository.findById(offerDTO.getLead().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Lead not found"));
+
+            LeadStatus rejectedStatus = leadStatusRepository.findById(7L)
+                    .orElseThrow(() -> new IllegalArgumentException("Lead status REJECT not found"));
+
+            lead.setLeadStatus(rejectedStatus);
+            lead.setRejectionReason(offerDTO.getRejectionReason());
+            lead.setRejectionReasonComment(offerDTO.getRejectionReasonComment());
+            lead.setFinal(true);
+            leadRepository.save(lead);
         }
 
         if (offerDTO.getOfferItems() != null){

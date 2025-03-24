@@ -1,9 +1,12 @@
 package wh.plus.crm.dto.lead;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import wh.plus.crm.dto.offer.OfferSummaryDTO;
+import wh.plus.crm.model.lead.ClientType;
 import wh.plus.crm.model.user.User;
 import wh.plus.crm.model.RejectionReason;
 
@@ -27,6 +30,7 @@ public class LeadDTO {
     private String rejectionReasonComment;
 
 
+    private ClientType clientType;
 
     private User user;
     private Long leadStatusId;

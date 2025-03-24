@@ -16,6 +16,4 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
     Page<Offer> findByClientId(Long clientId, Pageable pageable);
 
 
-
-
 }
