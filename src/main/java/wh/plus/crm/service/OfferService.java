@@ -308,6 +308,10 @@ public class OfferService {
         calculateGrossAndTaxForItems(existingOffer);
         recalculateTotalOfferItemsPrice(existingOffer);
 
+        if (OfferStatus.REJECTED.equals(offerDTO.getOfferStatus()) || OfferStatus.ACCEPTED.equals(offerDTO.getOfferStatus())) {
+            existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
+        }
+
         Offer updatedOffer = offerRepository.save(existingOffer);
         return offerMapper.toOfferDTO(updatedOffer);
 
