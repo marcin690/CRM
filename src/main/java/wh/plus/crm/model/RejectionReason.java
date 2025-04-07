@@ -20,7 +20,6 @@ public enum RejectionReason {
     NON_STANDARD_MATERIALS("Niestandardowe materiały lub wykończenia "),
     SELECTED_ANOTHER_COMPANY("Wybrana inna firma"),
     LACK_OF_LOGISTICAL_REQUIREMENTS("Brak minimalnych wymagań logistycznych"),
-
     UNCLEAR_CLIENT_REQUIREMENTS("Niejasne wymagania klienta"),
     LACK_OF_RELEVANT_EXPERIENCE("Brak doświadczenia w podobnych projektach"),
     CLIENT_REQUIREMENT_CHANGES("Zmienność wymagań klienta"),
@@ -30,10 +29,8 @@ public enum RejectionReason {
     DUPLICATE_BIDDING("Zduplikowane oferowanie"),
     CLIENT_PROJECT_HALT("Wstrzymanie projektu przez klienta"),
     BANK_GUARANTEE_ISSUES("Problemy z gwarancją bankową"),
-
     OVERLY_COMPLEX_ORDER("Zbyt duża różnorodność zamówienia"),
     MISSING_CERTIFICATIONS("Problemy z certyfikacjami"),
-
     LEGAL_RISKS("Ryzyko prawne"),
     NO_CONTACT("Brak kontaktu");
 

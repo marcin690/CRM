@@ -13,6 +13,8 @@ public enum OfferStatus {
     SIGNED("Podpisana umowa");
 
 
+
+
     private final String description;
 
     OfferStatus(String description){
