@@ -11,6 +11,7 @@ import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Contact;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.offer.Offer;
+import wh.plus.crm.model.user.SalesTeam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
 public class Project extends Auditable<String> {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -36,6 +38,10 @@ public class Project extends Auditable<String> {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private List<Offer> offers = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sales_team_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private SalesTeam salesTeam;
 
     private Long roomQuantity, projectNetValue;
 

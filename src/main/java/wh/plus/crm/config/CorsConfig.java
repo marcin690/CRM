@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://calm-river-05548b403.4.azurestaticapps.net", "http://localhost:3000", "https://whplus.com.pl")
+                        .allowedOrigins("https://calm-river-05548b403.4.azurestaticapps.net", "http://localhost:3000", "https://whplus.com.pl", "https://w-h.pl", "https://crm.w-h.pl")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
                         .allowedHeaders("*")
                         .exposedHeaders("Access-Control-Allow-Origin", "Access-Control-Allow-Credentials")

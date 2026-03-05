@@ -26,6 +26,7 @@ public class OfferDTO {
     private String approvalReason;
     private boolean isArchived;
     private boolean isContractSigned;
+    private boolean isConverted;
     private int version;
 
     private Currency currency;

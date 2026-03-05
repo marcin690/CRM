@@ -195,6 +195,11 @@ public class OfferService {
 
         calculateGrossAndTaxForItems(offer);
 
+        // Automatyczne ustawienie isConverted
+        offer.setConverted(
+                offer.getProject() != null || offer.getSignedContractDate() != null
+        );
+
         // Zapis do bazy
         Offer savedOffer = offerRepository.save(offer);
 
@@ -311,6 +316,11 @@ public class OfferService {
         if (OfferStatus.REJECTED.equals(offerDTO.getOfferStatus()) || OfferStatus.ACCEPTED.equals(offerDTO.getOfferStatus())) {
             existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
         }
+
+        // Automatyczne ustawienie isConverted
+        existingOffer.setConverted(
+                existingOffer.getProject() != null || existingOffer.getSignedContractDate() != null
+        );
 
         Offer updatedOffer = offerRepository.save(existingOffer);
         return offerMapper.toOfferDTO(updatedOffer);

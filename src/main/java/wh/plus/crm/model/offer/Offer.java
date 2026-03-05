@@ -117,6 +117,8 @@ public class Offer extends Auditable<String> {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    private boolean isConverted;
+
 
 
 
