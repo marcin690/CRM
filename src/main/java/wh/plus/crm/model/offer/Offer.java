@@ -97,6 +97,9 @@ public class Offer extends Auditable<String> {
     @Column(nullable = true)
     private LocalDateTime signedContractDate;
 
+    @Column(nullable = true)
+    private LocalDateTime statusChangeDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sales_team_id", nullable = true)
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

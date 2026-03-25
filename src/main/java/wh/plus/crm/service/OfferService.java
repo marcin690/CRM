@@ -286,6 +286,8 @@ public class OfferService {
             existingOffer.setProject(null);
         }
 
+        OfferStatus previousStatus = existingOffer.getOfferStatus();
+
         BeanUtils.copyProperties(offerDTO, existingOffer, NullPropertyUtils.getNullPropertyNames(offerDTO));
         if (offerDTO.getOfferItems() != null) {
 
@@ -313,6 +315,10 @@ public class OfferService {
         calculateGrossAndTaxForItems(existingOffer);
         recalculateTotalOfferItemsPrice(existingOffer);
 
+        if (offerDTO.getOfferStatus() != null && !offerDTO.getOfferStatus().equals(previousStatus)) {
+            existingOffer.setStatusChangeDate(LocalDateTime.now());
+        }
+
         if (OfferStatus.REJECTED.equals(offerDTO.getOfferStatus()) || OfferStatus.ACCEPTED.equals(offerDTO.getOfferStatus())) {
             existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
         }
@@ -336,6 +342,7 @@ public class OfferService {
     public void updateOfferStatus(Long id, OfferStatus offerStatus){
         Offer offer = offerRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
         offer.setOfferStatus(offerStatus);
+        offer.setStatusChangeDate(LocalDateTime.now());
         offerRepository.save(offer);
     }
 

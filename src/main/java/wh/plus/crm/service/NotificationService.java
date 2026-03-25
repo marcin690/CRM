@@ -36,7 +36,7 @@ public class NotificationService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
+    @Autowired(required = false)
     private EmailService emailService;
 
     @Autowired

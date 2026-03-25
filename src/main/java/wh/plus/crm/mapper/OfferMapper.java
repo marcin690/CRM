@@ -30,6 +30,7 @@ public interface OfferMapper {
     @Mapping(source = "clientGlobalId", target = "clientGlobalId")
     @Mapping(target = "rejectionOrApprovalDate", source = "rejectionOrApprovalDate")
     @Mapping(target = "signedContractDate", source = "signedContractDate")
+    @Mapping(target = "statusChangeDate", source = "statusChangeDate")
     @Mapping(target = "salesTeamId", source = "salesTeam.id")
     @Mapping(target = "salesTeamName", source = "salesTeam.name")
     @Mapping(target = "totalPrice", source = "totalPrice")

@@ -12,7 +12,7 @@ import wh.plus.crm.helper.EmailContentBuilder;
 
 import java.util.Map;
 
-@Service
+//@Service
 public class EmailService {
 
     @Autowired

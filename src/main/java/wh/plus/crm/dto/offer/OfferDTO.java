@@ -48,6 +48,7 @@ public class OfferDTO {
 
     private LocalDateTime rejectionOrApprovalDate;
     private LocalDateTime signedContractDate;
+    private LocalDateTime statusChangeDate;
 
     private List<OfferItemDTO> offerItems;
     private ProjectSummaryDTO project;
