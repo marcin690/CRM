@@ -292,12 +292,18 @@ public class OfferService {
         if (offerDTO.getOfferItems() != null) {
 
             for (OfferItemDTO itemDTO : offerDTO.getOfferItems()) {
-                Optional<OfferItem> existingItemOptional = existingOffer.getOfferItemList().stream()
-                        .filter(item -> item.getId().equals(itemDTO.getId())).findFirst();
+                if (itemDTO.getId() != null) {
+                    Optional<OfferItem> existingItemOptional = existingOffer.getOfferItemList().stream()
+                            .filter(item -> item.getId().equals(itemDTO.getId())).findFirst();
 
-                if (existingItemOptional.isPresent()) {
-                    OfferItem existingItem = existingItemOptional.get();
-                    BeanUtils.copyProperties(itemDTO, existingItem, NullPropertyUtils.getNullPropertyNames(itemDTO));
+                    if (existingItemOptional.isPresent()) {
+                        OfferItem existingItem = existingItemOptional.get();
+                        BeanUtils.copyProperties(itemDTO, existingItem, NullPropertyUtils.getNullPropertyNames(itemDTO));
+                    } else {
+                        OfferItem newItem = offerMapper.toEntity(itemDTO);
+                        newItem.setOffer(existingOffer);
+                        existingOffer.getOfferItemList().add(newItem);
+                    }
                 } else {
                     OfferItem newItem = offerMapper.toEntity(itemDTO);
                     newItem.setOffer(existingOffer);
@@ -306,7 +312,9 @@ public class OfferService {
             }
 
             existingOffer.getOfferItemList().removeIf(item ->
-                    offerDTO.getOfferItems().stream().noneMatch(dto -> dto.getId().equals(item.getId()))
+                    offerDTO.getOfferItems().stream()
+                            .filter(dto -> dto.getId() != null)
+                            .noneMatch(dto -> dto.getId().equals(item.getId()))
                     );
 
         }
