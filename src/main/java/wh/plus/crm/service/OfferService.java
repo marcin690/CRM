@@ -1,5 +1,7 @@
 package wh.plus.crm.service;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -288,7 +290,11 @@ public class OfferService {
 
         OfferStatus previousStatus = existingOffer.getOfferStatus();
 
-        BeanUtils.copyProperties(offerDTO, existingOffer, NullPropertyUtils.getNullPropertyNames(offerDTO));
+        String[] ignoreProperties = Stream.concat(
+                Arrays.stream(NullPropertyUtils.getNullPropertyNames(offerDTO)),
+                Stream.of("offerItems")
+        ).toArray(String[]::new);
+        BeanUtils.copyProperties(offerDTO, existingOffer, ignoreProperties);
         if (offerDTO.getOfferItems() != null) {
 
             for (OfferItemDTO itemDTO : offerDTO.getOfferItems()) {
