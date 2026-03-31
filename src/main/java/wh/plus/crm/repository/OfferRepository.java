@@ -19,23 +19,23 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
     Page<Offer> findByClientId(Long clientId, Pageable pageable);
 
     @Query("SELECT o.salesTeam.id, o.salesTeam.name, COUNT(o), " +
-            "SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
-            "COALESCE(SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN o.totalPrice ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN o.totalPrice ELSE 0 END), 0), " +
             "COALESCE(AVG(o.totalPrice), 0) " +
             "FROM Offer o " +
-            "WHERE o.creationDate >= :since " +
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until " +
             "AND o.salesTeam IS NOT NULL " +
             "GROUP BY o.salesTeam.id, o.salesTeam.name")
-    List<Object[]> getStatisticsByTeam(@Param("since") LocalDateTime since);
+    List<Object[]> getStatisticsByTeam(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
     @Query("SELECT COUNT(o), " +
-            "SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
-            "COALESCE(SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN o.totalPrice ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN o.totalPrice ELSE 0 END), 0), " +
             "COALESCE(AVG(o.totalPrice), 0) " +
             "FROM Offer o " +
-            "WHERE o.creationDate >= :since")
-    List<Object[]> getOverallStatistics(@Param("since") LocalDateTime since);
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until")
+    List<Object[]> getOverallStatistics(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
 }

@@ -7,6 +7,7 @@ import wh.plus.crm.dto.offer.TeamOfferStatisticsDTO;
 import wh.plus.crm.repository.OfferRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,11 +18,19 @@ public class OfferStatisticsService {
 
     private final OfferRepository offerRepository;
 
-    public OfferStatisticsDTO getOfferStatistics(int days) {
-        LocalDateTime since = LocalDateTime.now().minusDays(days);
+    public OfferStatisticsDTO getOfferStatistics(LocalDate dateFrom, LocalDate dateTo) {
+        // Domyślnie: ostatni miesiąc kalendarzowy (1-szy do ostatniego dnia poprzedniego miesiąca)
+        if (dateFrom == null || dateTo == null) {
+            LocalDate today = LocalDate.now();
+            dateFrom = today.minusMonths(1).withDayOfMonth(1);
+            dateTo = today.minusMonths(1).withDayOfMonth(today.minusMonths(1).lengthOfMonth());
+        }
+
+        LocalDateTime since = dateFrom.atStartOfDay();
+        LocalDateTime until = dateTo.atTime(23, 59, 59);
 
         // Statystyki ogólne
-        List<Object[]> overallResults = offerRepository.getOverallStatistics(since);
+        List<Object[]> overallResults = offerRepository.getOverallStatistics(since, until);
         Object[] overall = overallResults.isEmpty()
                 ? new Object[]{0L, 0L, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO}
                 : overallResults.get(0);
@@ -35,7 +44,7 @@ public class OfferStatisticsService {
                 : 0.0;
 
         // Statystyki per team
-        List<Object[]> teamResults = offerRepository.getStatisticsByTeam(since);
+        List<Object[]> teamResults = offerRepository.getStatisticsByTeam(since, until);
         List<TeamOfferStatisticsDTO> teamStats = teamResults.stream()
                 .map(row -> {
                     Long teamId = row[0] != null ? ((Number) row[0]).longValue() : null;
