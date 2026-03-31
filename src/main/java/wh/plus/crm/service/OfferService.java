@@ -31,6 +31,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -282,6 +284,11 @@ public class OfferService {
 
         OfferStatus previousStatus = existingOffer.getOfferStatus();
 
+        // Walidacja przejść statusów
+        if (offerDTO.getOfferStatus() != null && !offerDTO.getOfferStatus().equals(previousStatus)) {
+            validateStatusTransition(previousStatus, offerDTO.getOfferStatus());
+        }
+
         String[] ignoreProperties = Stream.concat(
                 Arrays.stream(NullPropertyUtils.getNullPropertyNames(offerDTO)),
                 Stream.of("offerItems", "client", "lead", "project", "user")
@@ -334,7 +341,12 @@ public class OfferService {
         if (offerDTO.getOfferStatus() != null && !offerDTO.getOfferStatus().equals(previousStatus)) {
             if (OfferStatus.SIGNED.equals(offerDTO.getOfferStatus())) {
                 existingOffer.setContractSigned(true);
-                existingOffer.setSignedContractDate(LocalDateTime.now());
+                // Jeśli frontend przesłał datę podpisania — użyj jej, w przeciwnym razie ustaw dzisiaj
+                if (offerDTO.getSignedContractDate() != null) {
+                    existingOffer.setSignedContractDate(offerDTO.getSignedContractDate());
+                } else {
+                    existingOffer.setSignedContractDate(LocalDateTime.now());
+                }
             } else {
                 existingOffer.setContractSigned(false);
                 existingOffer.setSignedContractDate(null);
@@ -369,6 +381,7 @@ public class OfferService {
 
     public void updateOfferStatus(Long id, OfferStatus offerStatus){
         Offer offer = offerRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+        validateStatusTransition(offer.getOfferStatus(), offerStatus);
         offer.setOfferStatus(offerStatus);
         offer.setStatusChangeDate(LocalDateTime.now());
 
@@ -469,6 +482,37 @@ public class OfferService {
 
 
             }
+        }
+    }
+
+    /**
+     * Walidacja dozwolonych przejść statusów oferty.
+     *
+     * Dozwolone przejścia:
+     * DRAFT    → SENT, REJECTED
+     * SENT     → ACCEPTED, REJECTED, DRAFT
+     * ACCEPTED → SIGNED, REJECTED, DRAFT
+     * REJECTED → DRAFT
+     * SIGNED   → DRAFT (przez reset decyzji)
+     *
+     * SIGNED wymaga przejścia przez ACCEPTED — nie można przeskoczyć.
+     */
+    private void validateStatusTransition(OfferStatus from, OfferStatus to) {
+        Map<OfferStatus, Set<OfferStatus>> allowedTransitions = Map.of(
+                OfferStatus.DRAFT, Set.of(OfferStatus.SENT, OfferStatus.ACCEPTED, OfferStatus.REJECTED),
+                OfferStatus.SENT, Set.of(OfferStatus.ACCEPTED, OfferStatus.REJECTED, OfferStatus.DRAFT),
+                OfferStatus.ACCEPTED, Set.of(OfferStatus.SIGNED, OfferStatus.REJECTED, OfferStatus.DRAFT),
+                OfferStatus.REJECTED, Set.of(OfferStatus.DRAFT),
+                OfferStatus.SIGNED, Set.of(OfferStatus.DRAFT)
+        );
+
+        Set<OfferStatus> allowed = allowedTransitions.getOrDefault(from, Set.of());
+        if (!allowed.contains(to)) {
+            throw new IllegalStateException(
+                    String.format("Niedozwolona zmiana statusu oferty: %s → %s. Dozwolone przejścia z %s: %s",
+                            from.getDescription(), to.getDescription(), from.getDescription(),
+                            allowed.stream().map(OfferStatus::getDescription).collect(Collectors.joining(", ")))
+            );
         }
     }
 }
