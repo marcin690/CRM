@@ -19,9 +19,9 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
     Page<Offer> findByClientId(Long clientId, Pageable pageable);
 
     @Query("SELECT o.salesTeam.id, o.salesTeam.name, COUNT(o), " +
-            "SUM(CASE WHEN o.isConverted = true THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
-            "COALESCE(SUM(CASE WHEN o.isConverted = true THEN o.totalPrice ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN o.totalPrice ELSE 0 END), 0), " +
             "COALESCE(AVG(o.totalPrice), 0) " +
             "FROM Offer o " +
             "WHERE o.creationDate >= :since " +
@@ -30,9 +30,9 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
     List<Object[]> getStatisticsByTeam(@Param("since") LocalDateTime since);
 
     @Query("SELECT COUNT(o), " +
-            "SUM(CASE WHEN o.isConverted = true THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
-            "COALESCE(SUM(CASE WHEN o.isConverted = true THEN o.totalPrice ELSE 0 END), 0), " +
+            "COALESCE(SUM(CASE WHEN o.contractSigned = true AND o.signedContractDate >= :since THEN o.totalPrice ELSE 0 END), 0), " +
             "COALESCE(AVG(o.totalPrice), 0) " +
             "FROM Offer o " +
             "WHERE o.creationDate >= :since")

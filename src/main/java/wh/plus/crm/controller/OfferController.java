@@ -100,6 +100,12 @@ public class OfferController {
     }
 
 
+    @PutMapping("/{id}/reset-decision")
+    public ResponseEntity<OfferDTO> resetDecision(@PathVariable Long id){
+        OfferDTO resetOffer = offerService.resetDecision(id);
+        return ResponseEntity.ok(resetOffer);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOffer(@PathVariable Long id){
         offerService.deleteOffer(id);

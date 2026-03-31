@@ -217,8 +217,6 @@ public class OfferService {
         if (offerDTO.getUser() != null) {
             User user = userRepository.findById(offerDTO.getUser().getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
             existingOffer.setUser(user);
-        } else {
-            existingOffer.setUser(null);
         }
 
         if (offerDTO.getApprovalReason() == null) {
@@ -270,29 +268,23 @@ public class OfferService {
         if (offerDTO.getClient() != null){
             Client client = clientRepository.findById(offerDTO.getClient().getId()).orElseThrow(() -> new IllegalArgumentException("Client not found"));
             existingOffer.setClient(client);
-        } else {
-            existingOffer.setClient(null);
         }
 
         if (offerDTO.getLead() != null) {
             Lead lead = leadRepository.findById(offerDTO.getLead().getId()).orElseThrow(() -> new IllegalArgumentException("Lead not found"));
             existingOffer.setLead(lead);
-        } else {
-            existingOffer.setLead(null);
         }
 
         if (offerDTO.getProject() != null) {
             Project project = projectRepository.findById(offerDTO.getProject().getId()).orElseThrow(() -> new IllegalArgumentException("Project not found"));
             existingOffer.setProject(project);
-        } else  {
-            existingOffer.setProject(null);
         }
 
         OfferStatus previousStatus = existingOffer.getOfferStatus();
 
         String[] ignoreProperties = Stream.concat(
                 Arrays.stream(NullPropertyUtils.getNullPropertyNames(offerDTO)),
-                Stream.of("offerItems")
+                Stream.of("offerItems", "client", "lead", "project", "user")
         ).toArray(String[]::new);
         BeanUtils.copyProperties(offerDTO, existingOffer, ignoreProperties);
         if (offerDTO.getOfferItems() != null) {
@@ -318,6 +310,7 @@ public class OfferService {
             }
 
             existingOffer.getOfferItemList().removeIf(item ->
+                    item.getId() != null &&
                     offerDTO.getOfferItems().stream()
                             .filter(dto -> dto.getId() != null)
                             .noneMatch(dto -> dto.getId().equals(item.getId()))
@@ -335,6 +328,27 @@ public class OfferService {
 
         if (OfferStatus.REJECTED.equals(offerDTO.getOfferStatus()) || OfferStatus.ACCEPTED.equals(offerDTO.getOfferStatus())) {
             existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
+        }
+
+        // Automatyczne ustawienie daty podpisania umowy przy zmianie statusu
+        if (offerDTO.getOfferStatus() != null && !offerDTO.getOfferStatus().equals(previousStatus)) {
+            if (OfferStatus.SIGNED.equals(offerDTO.getOfferStatus())) {
+                existingOffer.setContractSigned(true);
+                existingOffer.setSignedContractDate(LocalDateTime.now());
+            } else {
+                existingOffer.setContractSigned(false);
+                existingOffer.setSignedContractDate(null);
+            }
+        }
+
+        // Reset decyzji — czyszczenie pól przy cofnięciu do DRAFT
+        if (OfferStatus.DRAFT.equals(offerDTO.getOfferStatus()) && !OfferStatus.DRAFT.equals(previousStatus)) {
+            existingOffer.setRejectionOrApprovalDate(null);
+            existingOffer.setApprovalReason(null);
+            existingOffer.setRejectionReason(null);
+            existingOffer.setRejectionReasonComment(null);
+            existingOffer.setSignedContractDate(null);
+            existingOffer.setContractSigned(false);
         }
 
         // Automatyczne ustawienie isConverted
@@ -357,7 +371,39 @@ public class OfferService {
         Offer offer = offerRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
         offer.setOfferStatus(offerStatus);
         offer.setStatusChangeDate(LocalDateTime.now());
+
+        if (OfferStatus.SIGNED.equals(offerStatus)) {
+            offer.setContractSigned(true);
+            offer.setSignedContractDate(LocalDateTime.now());
+        } else {
+            offer.setContractSigned(false);
+            offer.setSignedContractDate(null);
+        }
+
+        offer.setConverted(
+                offer.getProject() != null || offer.getSignedContractDate() != null
+        );
+
         offerRepository.save(offer);
+    }
+
+    @Transactional
+    public OfferDTO resetDecision(Long offerId) {
+        Offer offer = offerRepository.findById(offerId)
+                .orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+
+        offer.setOfferStatus(OfferStatus.DRAFT);
+        offer.setStatusChangeDate(LocalDateTime.now());
+        offer.setRejectionOrApprovalDate(null);
+        offer.setApprovalReason(null);
+        offer.setRejectionReason(null);
+        offer.setRejectionReasonComment(null);
+        offer.setSignedContractDate(null);
+        offer.setContractSigned(false);
+        offer.setConverted(offer.getProject() != null);
+
+        Offer saved = offerRepository.save(offer);
+        return offerMapper.toOfferDTO(saved);
     }
 
     private BigDecimal getEuroExchangeRate() {
