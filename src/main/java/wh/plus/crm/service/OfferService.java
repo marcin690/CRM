@@ -334,7 +334,11 @@ public class OfferService {
         }
 
         if (OfferStatus.REJECTED.equals(offerDTO.getOfferStatus()) || OfferStatus.ACCEPTED.equals(offerDTO.getOfferStatus())) {
-            existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
+            if (offerDTO.getRejectionOrApprovalDate() != null) {
+                existingOffer.setRejectionOrApprovalDate(offerDTO.getRejectionOrApprovalDate());
+            } else {
+                existingOffer.setRejectionOrApprovalDate(LocalDateTime.now());
+            }
         }
 
         // Automatyczne ustawienie daty podpisania umowy przy zmianie statusu
