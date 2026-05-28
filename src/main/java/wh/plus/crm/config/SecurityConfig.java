@@ -29,7 +29,12 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtUtil, userService);
     }
 
-    private static final String[] AUTH_WHITELIST = {"/auth/register", "/auth/login"};
+    private static final String[] AUTH_WHITELIST = {
+            "/auth/register",
+            "/auth/login",
+            "/api/form-submissions",   // publiczny endpoint dla landing-page'y (PublicLeadController)
+            "/api/form-submissions/**"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

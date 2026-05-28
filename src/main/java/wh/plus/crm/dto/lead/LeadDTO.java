@@ -47,6 +47,12 @@ public class LeadDTO {
 
     private Long clientPhone, vatNumber;
 
+    /** Klient powracający — atrybut leada, nie kanał pozyskania (vide V8). */
+    private Boolean returningClient;
+
+    /** Pełny URL strony z której przyszedł lead (np. LP /wycena). */
+    private String sourceUrl;
+
     private String createdBy;
     private String lastModifiedBy;
     private LocalDateTime lastModifiedDate;

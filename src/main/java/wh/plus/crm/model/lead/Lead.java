@@ -86,6 +86,22 @@ public class Lead extends Auditable<String>  {
 
     private Long clientPhone, vatNumber;
 
+    /**
+     * Czy lead pochodzi od klienta z którym wcześniej już współpracowaliśmy.
+     * To atrybut leada, NIE kanał pozyskania — historycznie był jako LeadSource=RETURNING_CLIENT,
+     * od V8 jest osobnym polem (vide migracja V8__Extract_returning_client_from_source.sql).
+     * Nullable żeby odróżnić "nieustawione" od "fałsz" w starych rekordach poza backfillem.
+     */
+    @Column(name = "is_returning_client")
+    private Boolean returningClient;
+
+    /**
+     * Pełny URL strony z której przyszedł lead (LP, formularz na www, itp.).
+     * Pomaga rozróżnić różne landing-page i wersje formularzy w eksportach/raportach.
+     */
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
     @Override
     public String getClientGlobalId() {
         return clientGlobalId;
