@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * plików (MinIO) w polu description. Nie modyfikuje istniejących encji ani schemy.
  *
  * Ochrona przed spamem:
- *  - honeypot (pole 'website' powinno być puste)
+ *  - reCAPTCHA v3 (gdy RECAPTCHA_SECRET_KEY ustawiony) — sprawdza score >= 0.5 oraz action == "lead_form"
  *  - in-memory rate limit per IP (10 zgłoszeń / 10 minut)
- *  - limit rozmiaru i liczby plików
+ *  - limit rozmiaru i liczby plików (max 8 × 15 MB)
  */
 @RestController
 @RequestMapping("/api/form-submissions")
@@ -88,17 +88,9 @@ public class PublicLeadController {
             @RequestParam(value = "recaptchaToken", required = false) String recaptchaToken,
             @RequestParam(value = "returningClient", required = false) Boolean returningClient,
             @RequestParam(value = "sourceUrl", required = false) String sourceUrl,   // pełny URL LP / strony z której przyszedł lead
-            @RequestParam(value = "website", required = false) String honeypot,      // honeypot
             @RequestParam(value = "files", required = false) MultipartFile[] files,
             HttpServletRequest request
     ) {
-        // Honeypot — bot wypełni ukryte pole 'website'. Odpowiadamy 200 OK,
-        // żeby nie zdradzać że to spam-trap.
-        if (honeypot != null && !honeypot.isBlank()) {
-            log.info("Honeypot tripped from ip={}", clientIp(request));
-            return ResponseEntity.ok(Map.of("success", true, "leadId", -1L));
-        }
-
         // Rate-limit
         String ip = clientIp(request);
         if (!allowByRate(ip)) {
