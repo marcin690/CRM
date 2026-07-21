@@ -19,7 +19,19 @@ public class ProjectDTO {
     private String salesTeamName;
 
     private Long roomQuantity;
+    private Long floorCount;
     private Long projectNetValue;
+    private java.math.BigDecimal declaredMargin;
+    private String city;
+    private String status;
+
+    // Warunki realizacji (boxed — częściowy PATCH nie wyzeruje pozostałych).
+    private Boolean truckAccessible;
+    private Boolean weekendWork;
+    private Boolean nightWork;
+    private Boolean referenceLetterReceived;
+    private Boolean addedToWebsite;
+    private Boolean addedToSocialMedia;
 
     private String projectDescription;
 

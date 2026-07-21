@@ -12,7 +12,8 @@ public class OfferSpecification {
     }
 
     public static Specification<Offer> hasName(String name) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("name"), "%" + name + "%");
+        return (root, query, criteriaBuilder) -> criteriaBuilder.like(
+                criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%");
     }
 
     public static Specification<Offer> hasClientType(ClientType clientType) {

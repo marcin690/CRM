@@ -11,8 +11,18 @@ import wh.plus.crm.mapper.ProjectMapper;
 import wh.plus.crm.model.client.Client;
 import wh.plus.crm.model.project.Project;
 import wh.plus.crm.model.user.SalesTeam;
+import org.springframework.transaction.annotation.Transactional;
+import wh.plus.crm.repository.AdditionalCostRepository;
 import wh.plus.crm.repository.ClientRepository;
+import wh.plus.crm.repository.ContactRepository;
+import wh.plus.crm.repository.EventRepository;
+import wh.plus.crm.repository.FurnitureItemRepository;
+import wh.plus.crm.repository.InvoiceRepository;
+import wh.plus.crm.repository.MontageRepository;
+import wh.plus.crm.repository.OrderRepository;
+import wh.plus.crm.repository.ProjectCommentRepository;
 import wh.plus.crm.repository.ProjectRepository;
+import wh.plus.crm.repository.ProjectSharePointFileRepository;
 import wh.plus.crm.repository.SalesTeamRepository;
 
 @Service
@@ -23,6 +33,15 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final ClientRepository clientRepository;
     private final SalesTeamRepository salesTeamRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final OrderRepository orderRepository;
+    private final MontageRepository montageRepository;
+    private final AdditionalCostRepository additionalCostRepository;
+    private final FurnitureItemRepository furnitureItemRepository;
+    private final ProjectCommentRepository projectCommentRepository;
+    private final ProjectSharePointFileRepository sharePointFileRepository;
+    private final EventRepository eventRepository;
+    private final ContactRepository contactRepository;
 
     public Page<ProjectDTO> getProjects(Pageable pageable) {
         Pageable sorted = PageRequest.of(
@@ -87,7 +106,22 @@ public class ProjectService {
         return projectMapper.projectToProjectDTO(saved);
     }
 
+    @Transactional
     public void deleteProject(Long id) {
+        // Dzieci bez kaskady od strony Project — usuwamy jawnie w kolejności zależności.
+        // 1. Faktury (referują wiązanie Fakturowni, które zaraz zniknie kaskadą).
+        invoiceRepository.deleteAll(invoiceRepository.findAllByBinding_Project_IdOrderByIssueDateDesc(id));
+        // 2. Zamówienia (+ pozycje kaskadą), montaże, koszty, meble, komentarze, pliki SharePoint.
+        orderRepository.deleteAll(orderRepository.findAllByProject_IdOrderByIdDesc(id));
+        montageRepository.deleteAll(montageRepository.findAllByProject_IdOrderByStartDateAsc(id));
+        additionalCostRepository.deleteAll(additionalCostRepository.findAllByProject_IdOrderByCostDateDesc(id));
+        furnitureItemRepository.deleteAll(furnitureItemRepository.findAllByProject_IdOrderBySortOrderAscIdAsc(id));
+        projectCommentRepository.deleteAll(projectCommentRepository.findAllByProject_IdOrderByCreationDateDesc(id));
+        sharePointFileRepository.deleteAll(sharePointFileRepository.findAllByProject_IdOrderByCategoryAscNameAsc(id));
+        // 3. Odpięcie zdarzeń i kontaktów (zachowujemy je).
+        eventRepository.detachProject(id);
+        contactRepository.detachProject(id);
+        // 4. Sam projekt — kaskada: etapy(+zadania), oferty, wiązania, dziennik(+komentarze), join dostawców.
         projectRepository.deleteById(id);
     }
 }

@@ -1,6 +1,7 @@
 package wh.plus.crm.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import wh.plus.crm.model.Event;
@@ -23,6 +24,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
            "WHERE (e.date BETWEEN :from AND :to) OR e.cycleType != 'NONE'")
    List<Event> findEventsInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
-
+   /** Odpięcie zdarzeń od usuwanego projektu (zachowujemy zdarzenia). */
+   @Modifying
+   @Query("update Event e set e.project = null where e.project.id = :projectId")
+   void detachProject(@Param("projectId") Long projectId);
 
 }

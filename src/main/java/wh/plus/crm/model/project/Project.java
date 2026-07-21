@@ -6,11 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import wh.plus.crm.model.Auditable;
 import wh.plus.crm.model.Contact;
 import wh.plus.crm.model.client.Client;
+import wh.plus.crm.model.invoice.ProjectFakturowniaBinding;
 import wh.plus.crm.model.offer.Offer;
+import wh.plus.crm.model.supplier.Supplier;
 import wh.plus.crm.model.user.SalesTeam;
 
 import java.util.ArrayList;
@@ -38,6 +41,31 @@ public class Project extends Auditable<String> {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private List<Offer> offers = new ArrayList<>();
 
+    // Trzy kolekcje poniżej są wyłączone z Envers (@NotAudited).
+    // Powód: targety (ProjectFakturowniaBinding, ConstructionLogEntry, ProjectStage)
+    // nie są @Audited, a @Audited(targetAuditMode = NOT_AUDITED) na @OneToMany
+    // i tak rzuca EnversMappingException w Hibernate 6.5.
+    // Dla Offer (też @OneToMany) to działa, bo Offer SAM jest @Audited.
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
+    private List<ProjectFakturowniaBinding> fakturowniaBindings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
+    private List<ConstructionLogEntry> constructionLog = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
+    private List<ProjectStage> stages = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "project_supplier",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "supplier_id"))
+    @NotAudited
+    private List<Supplier> suppliers = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sales_team_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
@@ -53,13 +81,20 @@ public class Project extends Auditable<String> {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Contact contacts;
 
-    private String fakturowniaCategory;
-
     // Dodatkowe pola Long
     /**
      * Łączna deklarowana wartość projektu
      */
     private Long totalDeclaredValue;
+
+    /** Marża deklarowana (procent), do której dąży projekt. */
+    private java.math.BigDecimal declaredMargin;
+
+    /** Miasto / lokalizacja realizacji (do harmonogramu montaży). */
+    private String city;
+
+    /** Status projektu w pipeline (Wysłane / Zaakceptowane / W realizacji / Zrealizowane / Wstrzymane). */
+    private String status;
 
     /**
      * Ilość pięter

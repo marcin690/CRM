@@ -18,6 +18,17 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
 
     Page<Offer> findByClientId(Long clientId, Pageable pageable);
 
+    /**
+     * Oferty kandydatów do przypięcia do konkretnego projektu:
+     * - tego samego klienta co projekt
+     * - jeszcze nieprzypiętych do żadnego projektu LUB przypiętych do innego niż ten
+     * Sortowanie: nieprzypięte najpierw (project IS NULL).
+     */
+    @Query("SELECT o FROM Offer o WHERE o.client.id = :clientId " +
+            "AND (o.project IS NULL OR o.project.id <> :projectId) " +
+            "ORDER BY CASE WHEN o.project IS NULL THEN 0 ELSE 1 END, o.creationDate DESC")
+    List<Offer> findPinnableForProject(@Param("projectId") Long projectId, @Param("clientId") Long clientId);
+
     @Query("SELECT o.salesTeam.id, o.salesTeam.name, COUNT(o), " +
             "SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
