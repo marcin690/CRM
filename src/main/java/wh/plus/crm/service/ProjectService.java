@@ -72,6 +72,8 @@ public class ProjectService {
             Client client = clientRepository.findById(dto.getClient().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Client not found"));
             project.setClient(client);
+            // Przepnij identyfikator cyklu życia klienta (lead → klient → oferta → PROJEKT).
+            if (client.getClientGlobalId() != null) project.setClientGlobalId(client.getClientGlobalId());
         }
 
         if (dto.getSalesTeamId() != null) {
@@ -94,6 +96,8 @@ public class ProjectService {
             Client client = clientRepository.findById(dto.getClient().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Client not found"));
             existing.setClient(client);
+            // Utrzymaj nić cyklu życia klienta — nie zerujemy istniejącego id, gdy klient go nie ma.
+            if (client.getClientGlobalId() != null) existing.setClientGlobalId(client.getClientGlobalId());
         }
 
         if (dto.getSalesTeamId() != null) {

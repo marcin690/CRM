@@ -13,6 +13,9 @@ public class ProjectDTO {
     private Long id;
     private String name;
 
+    /** Identyfikator cyklu życia klienta (lead → oferta → projekt → klient). Tylko do odczytu — nadaje go system. */
+    private String clientGlobalId;
+
     private ClientSummaryDTO client;
 
     private Long salesTeamId;
