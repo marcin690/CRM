@@ -1,20 +1,57 @@
--- project.id musi byc AUTO_INCREMENT — encja Project uzywa @GeneratedValue(IDENTITY),
--- wiec Hibernate nie wysyla id w insercie i liczy, ze baza je nada.
+-- Kompleksowa naprawa AUTO_INCREMENT na kolumnach 'id' (PRIMARY KEY).
 --
--- Na tym prodzie tabela 'project' istniala wczesniej z kolumna id BEZ auto_increment,
--- przez co "insert into project (...)" konczyl sie: Field 'id' doesn't have a default value.
--- ddl-auto=update NIE dodaje auto_increment do istniejacej kolumny — trzeba migracja.
+-- Kontekst: prod zostal zaimportowany z dumpa, ktory pogubil flagi AUTO_INCREMENT na
+-- czesci starych tabel. Encje uzywaja @GeneratedValue(IDENTITY), wiec Hibernate nie
+-- wysyla 'id' w insercie i baza musi je nadawac. Bez auto_increment kazdy insert konczyl
+-- sie "Field 'id' doesn't have a default value". ddl-auto=update tego nie naprawia.
 --
--- Defensywnie (Flyway leci przed ddl-auto): rusz kolumne tylko gdy tabela istnieje
--- i id nie jest juz auto_increment. Na swiezej bazie Hibernate stworzy id poprawnie -> NO-OP.
+-- Zamiast latac tabela-po-tabeli, wykrywamy i naprawiamy WSZYSTKIE dotkniete tabele naraz:
+-- kazda tabela w tej bazie, ktorej kolumna 'id' jest kluczem glownym typu int/bigint i NIE
+-- ma jeszcze auto_increment. FK sa chwilowo wylaczone (kolumna 'id' bywa celem kluczy obcych,
+-- np. comments -> project), a typ kolumny zachowujemy 1:1 (COLUMN_TYPE).
+--
+-- Migracja jest idempotentna: gdy nic nie brakuje (swiezy prod tworzony przez Hibernate) => NO-OP.
 
-SET @has_project := (SELECT COUNT(*) FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'project');
-SET @id_is_autoinc := (SELECT COUNT(*) FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'project'
-      AND COLUMN_NAME = 'id' AND EXTRA LIKE '%auto_increment%');
+SET FOREIGN_KEY_CHECKS = 0;
 
-SET @sql := IF(@has_project > 0 AND @id_is_autoinc = 0,
-    'ALTER TABLE project MODIFY id BIGINT NOT NULL AUTO_INCREMENT',
-    'SELECT 1');
-PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+DROP PROCEDURE IF EXISTS fix_autoincrement_ids;
+
+DELIMITER $$
+CREATE PROCEDURE fix_autoincrement_ids()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE t_name VARCHAR(255);
+    DECLARE c_type VARCHAR(255);
+    DECLARE cur CURSOR FOR
+        SELECT c.TABLE_NAME, c.COLUMN_TYPE
+        FROM information_schema.COLUMNS c
+        JOIN information_schema.KEY_COLUMN_USAGE k
+          ON k.TABLE_SCHEMA = c.TABLE_SCHEMA AND k.TABLE_NAME = c.TABLE_NAME AND k.COLUMN_NAME = c.COLUMN_NAME
+        JOIN information_schema.TABLE_CONSTRAINTS tc
+          ON tc.TABLE_SCHEMA = k.TABLE_SCHEMA AND tc.TABLE_NAME = k.TABLE_NAME AND tc.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        WHERE c.TABLE_SCHEMA = DATABASE()
+          AND c.COLUMN_NAME = 'id'
+          AND tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
+          AND c.DATA_TYPE IN ('bigint', 'int')
+          AND c.EXTRA NOT LIKE '%auto_increment%';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+    read_loop: LOOP
+        FETCH cur INTO t_name, c_type;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        SET @ddl = CONCAT('ALTER TABLE `', t_name, '` MODIFY `id` ', c_type, ' NOT NULL AUTO_INCREMENT');
+        PREPARE st FROM @ddl;
+        EXECUTE st;
+        DEALLOCATE PREPARE st;
+    END LOOP;
+    CLOSE cur;
+END$$
+DELIMITER ;
+
+CALL fix_autoincrement_ids();
+DROP PROCEDURE fix_autoincrement_ids;
+
+SET FOREIGN_KEY_CHECKS = 1;
