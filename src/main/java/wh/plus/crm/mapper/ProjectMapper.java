@@ -22,6 +22,7 @@ public interface ProjectMapper {
     @Mapping(target = "salesTeam.id", source = "salesTeamId")
     @Mapping(target = "offers", ignore = true)
     @Mapping(target = "client", ignore = true)
+    @Mapping(target = "clientGlobalId", ignore = true) // nadawane przez logikę propagacji, nie z inputu
     Project projectDTOToProject(ProjectDTO projectDTO);
 
     ProjectSummaryDTO toProjectSummaryDTO(Project project);
@@ -30,6 +31,7 @@ public interface ProjectMapper {
     @Mapping(target = "salesTeam", ignore = true)
     @Mapping(target = "client", ignore = true)
     @Mapping(target = "offers", ignore = true)
+    @Mapping(target = "clientGlobalId", ignore = true) // system-managed — nie nadpisujemy z inputu klienta
     void updateProjectFromProjectDTO(ProjectDTO projectDTO, @MappingTarget Project project);
 
     default List<OfferSummaryDTO> mapOffersToSummary(List<Offer> offers) {

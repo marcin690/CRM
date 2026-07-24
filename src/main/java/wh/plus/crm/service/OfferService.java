@@ -183,6 +183,12 @@ public class OfferService {
             Project project = projectRepository.findById(offerDTO.getProject().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Project not found"));
             offer.setProject(project);
+            // Backfill: gdy projekt powstał bez identyfikatora cyklu życia, przepnij go z oferty
+            // (lead → oferta → PROJEKT). Nie nadpisujemy, jeśli projekt już go ma.
+            if (project.getClientGlobalId() == null && clientGlobalId != null) {
+                project.setClientGlobalId(clientGlobalId);
+                projectRepository.save(project);
+            }
         }
 
         if (offerDTO.getSalesTeamId() != null) {

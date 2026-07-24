@@ -62,7 +62,9 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.32</version>
+            <!-- 1.18.46: wspiera JDK 23/24/25. Starsze (1.18.32) nie generują
+                 getterów na JDK 23+ → build pada na "cannot find symbol getX". -->
+            <version>1.18.46</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -173,6 +175,12 @@
             <version>8.5.7</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -202,6 +210,28 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>17</release>
+                    <!-- JDK 23+ nie uruchamia już automatycznie procesorów adnotacji
+                         znalezionych tylko na classpath. Rejestrujemy je jawnie, żeby
+                         Lombok i MapStruct działały niezależnie od wersji JDK.
+                         lombok-mapstruct-binding zapewnia, że MapStruct widzi gettery
+                         wygenerowane przez Lombok. -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.46</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.5.3.Final</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>

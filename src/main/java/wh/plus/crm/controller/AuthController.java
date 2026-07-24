@@ -10,6 +10,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +23,7 @@ import wh.plus.crm.model.auth.AuthenticationResponse;
 import wh.plus.crm.security.JwtUtil;
 import wh.plus.crm.service.UserService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -61,6 +65,28 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("An error occurred during password reset.");
         }
+    }
+
+    /**
+     * Zwraca username i listę authorities zalogowanego usera.
+     * Frontend używa do gating-u UI (np. zakładka „Fakturownia" tylko dla ADMIN).
+     * Wymagany Bearer token — endpoint pod auth.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<Map<String, Object>> me() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(401).build();
+        }
+        Object principal = auth.getPrincipal();
+        String username = (principal instanceof User u) ? u.getUsername() : auth.getName();
+        List<String> authorities = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        return ResponseEntity.ok(Map.of(
+                "username", username,
+                "authorities", authorities
+        ));
     }
 
     @PostMapping("/login")
