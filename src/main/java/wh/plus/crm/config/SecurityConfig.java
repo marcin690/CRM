@@ -49,8 +49,22 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.getWriter().write("Token wygasł lub jest nieprawidłowy.");
+                            Object jwtError = request.getAttribute(JwtAuthenticationFilter.JWT_ERROR_ATTRIBUTE);
+                            String message;
+                            if ("expired".equals(jwtError)) {
+                                message = "Sesja wygasła. Zaloguj się ponownie.";
+                            } else if ("userNotFound".equals(jwtError)) {
+                                message = "Użytkownik z tokenu nie istnieje.";
+                            } else if ("invalid".equals(jwtError)) {
+                                message = "Token jest nieprawidłowy.";
+                            } else {
+                                message = "Brak autoryzacji — zaloguj się.";
+                            }
+                            writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, "unauthorized", message);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            writeJson(response, HttpServletResponse.SC_FORBIDDEN, "forbidden",
+                                    "Brak uprawnień do tej operacji.");
                         })
                 )
                 .sessionManagement(session -> session
@@ -65,5 +79,12 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    /** Spójna odpowiedź JSON dla błędów auth (401/403). Komunikaty są stałe, bez znaków wymagających escapowania. */
+    private static void writeJson(HttpServletResponse response, int status, String error, String message) throws java.io.IOException {
+        response.setStatus(status);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"error\":\"" + error + "\",\"message\":\"" + message + "\"}");
     }
 }

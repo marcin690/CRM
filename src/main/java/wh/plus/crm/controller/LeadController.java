@@ -59,7 +59,7 @@ public class LeadController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<LeadDTO> createLead(@RequestBody LeadDTO leadDTO, Authentication authentication) {
         String username = authentication.getName();
         LeadDTO createdLead = leadService.save(leadDTO);
@@ -67,7 +67,7 @@ public class LeadController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<LeadDTO> updateLead(@PathVariable Long id, @RequestBody LeadDTO lead) {
         lead.setId(id); // Ustaw ID w LeadDTO
         LeadDTO updatedLead = leadService.update(id, lead); // Użyj metody update do aktualizacji
@@ -75,7 +75,7 @@ public class LeadController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<LeadDTO> deleteLead(@RequestBody List<Long> ids){
         leadService.deleteLead(ids);
         return ResponseEntity.noContent().build();
