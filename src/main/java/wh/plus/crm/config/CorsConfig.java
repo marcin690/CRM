@@ -8,30 +8,49 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Lista dozwolonych origin-ów dla CORS.
  *
- * Konfigurowana przez właściwość {@code app.cors.allowed-origins} (CSV).
- * W produkcji ustawiona zmienną środowiskową {@code CORS_ALLOWED_ORIGINS}
- * (np. w Railway: Settings → Variables → CORS_ALLOWED_ORIGINS=...).
+ * Konfigurowana przez właściwość {@code app.cors.allowed-origins} (CSV, env
+ * {@code CORS_ALLOWED_ORIGINS} w Railway) ORAZ zawsze uzupełniana o wbudowaną
+ * listę własnych domen WH z wildcardami subdomen ({@link #ALWAYS_ALLOWED}).
  *
- * Default (gdy zmiennej nie ma) — bezpieczna lista znanych domen
- * + http://localhost:3000 dla lokalnego dev frontendu.
+ * Dzięki temu warianty {@code www.} i dowolne subdomeny (np. www.w-h.pl)
+ * są dozwolone niezależnie od tego, co ustawiono w env — to naprawia klasę
+ * błędów "user na www.* dostaje CORS", bez ryzyka pominięcia wariantu w liście.
  */
 @Configuration
 @Slf4j
 public class CorsConfig {
+
+    /**
+     * Zawsze dozwolone wzorce (własne domeny WH). Wildcard {@code *.} pokrywa
+     * www.* i inne subdomeny; apex (bez subdomeny) musi być osobno.
+     * allowedOriginPatterns wspiera wildcardy i działa z allowCredentials(true).
+     */
+    private static final String[] ALWAYS_ALLOWED = {
+            "https://w-h.pl", "https://*.w-h.pl",
+            "https://wyposazenie-hotelowe.pl", "https://*.wyposazenie-hotelowe.pl",
+            "https://whplus.com.pl", "https://*.whplus.com.pl",
+            "https://*.azurestaticapps.net"
+    };
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOriginsCsv;
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
-        final String[] origins = Arrays.stream(allowedOriginsCsv.split(","))
+        // Kolejność zachowana, duplikaty usunięte: env/CSV + zawsze dozwolone WH.
+        Set<String> merged = new LinkedHashSet<>();
+        Arrays.stream(allowedOriginsCsv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .toArray(String[]::new);
+                .forEach(merged::add);
+        merged.addAll(Arrays.asList(ALWAYS_ALLOWED));
+        final String[] origins = merged.toArray(new String[0]);
 
         log.info("CORS allowed origin patterns ({}): {}", origins.length, String.join(", ", origins));
 
