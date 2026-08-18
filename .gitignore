@@ -34,3 +34,6 @@ build/
 
 ### macOS ###
 .DS_Store
+
+# Lokalne sekrety (import przez spring.config.import)
+local.properties
