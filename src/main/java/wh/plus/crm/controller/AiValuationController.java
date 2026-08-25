@@ -83,5 +83,12 @@ public class AiValuationController {
         return ResponseEntity.ok().build();
     }
 
+    /** Usunięcie wyceny wraz z historią czatu. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        valuationService.deleteJob(id);
+        return ResponseEntity.noContent().build();
+    }
+
     public record FeedbackRequest(String rating, String comment) {}
 }

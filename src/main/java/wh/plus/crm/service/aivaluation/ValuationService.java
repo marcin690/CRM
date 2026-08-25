@@ -205,6 +205,13 @@ public class ValuationService {
         return toDetail(findJob(id));
     }
 
+    /** Usuwa wycenę wraz z historią czatu (kaskada na ValuationMessage). */
+    @Transactional
+    public void deleteJob(Long id) {
+        ValuationJob job = findJob(id);
+        jobRepository.delete(job);
+    }
+
     // --- Porównanie z ofertą dostawcy (agent porównawczy, synchronicznie) ---
 
     /**
