@@ -212,6 +212,18 @@ public class ValuationService {
         jobRepository.delete(job);
     }
 
+    /** Zmienia tytuł wyceny. */
+    @Transactional
+    public ValuationJobDto renameJob(Long id, String title) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Tytuł nie może być pusty");
+        }
+        ValuationJob job = findJob(id);
+        job.setTitle(title.trim());
+        jobRepository.save(job);
+        return toSummary(job);
+    }
+
     // --- Porównanie z ofertą dostawcy (agent porównawczy, synchronicznie) ---
 
     /**

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nowy lead z formularza</title>
+</head>
+<body style="margin:0; padding:0; background:#f4f5f7; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7; padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="max-width:600px; width:100%; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e5e7eb;">
+                <tr>
+                    <td style="background:#111827; padding:20px 28px;">
+                        <span style="color:#ffffff; font-size:18px; font-weight:bold;">Nowy lead z formularza</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px 28px 8px 28px;">
+                        <p style="margin:0 0 16px 0; font-size:14px; color:#4b5563;">
+                            Do CRM wpłynęło nowe zgłoszenie ze strony.
+                        </p>
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280; width:160px;">Imię i nazwisko</td>
+                                <td style="padding:6px 0; font-weight:bold;" th:text="${clientName}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280;">Firma</td>
+                                <td style="padding:6px 0;" th:text="${company}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280;">E-mail</td>
+                                <td style="padding:6px 0;">
+                                    <a th:href="'mailto:' + ${email}" th:text="${email}"
+                                       style="color:#2563eb; text-decoration:none;">—</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280;">Telefon</td>
+                                <td style="padding:6px 0;" th:text="${phone}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280;">Źródło</td>
+                                <td style="padding:6px 0;" th:text="${source}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0; color:#6b7280; vertical-align:top;">Strona źródłowa</td>
+                                <td style="padding:6px 0; word-break:break-all;" th:text="${sourceUrl}">—</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:16px 28px 28px 28px;">
+                        <a th:href="${leadUrl}"
+                           style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none;
+                                  padding:12px 24px; border-radius:6px; font-size:14px; font-weight:bold;">
+                            Otwórz lead w CRM
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#f9fafb; padding:16px 28px; border-top:1px solid #e5e7eb;">
+                        <p style="margin:0; font-size:12px; color:#9ca3af;">
+                            Powiadomienie automatyczne z systemu CRM WH-Plus.
+                            Odbiorców możesz zmienić w Ustawieniach powiadomień.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

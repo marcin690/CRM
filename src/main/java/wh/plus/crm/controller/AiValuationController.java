@@ -90,5 +90,12 @@ public class AiValuationController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Zmiana tytułu wyceny. */
+    @PatchMapping("/{id}/title")
+    public ValuationJobDto rename(@PathVariable Long id, @RequestBody RenameRequest req) {
+        return valuationService.renameJob(id, req.title());
+    }
+
     public record FeedbackRequest(String rating, String comment) {}
+    public record RenameRequest(String title) {}
 }
