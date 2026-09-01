@@ -65,8 +65,12 @@ public class NotificationController {
         dto.setContent(n.getContent());
         dto.setOpen(n.isOpen());
         dto.setCreationDate(n.getCreationDate());
-        if (n.getRelatedEntityType() == EntityType.PROJECT && n.getRelatedEntityId() != null) {
-            dto.setLink("/projects/" + n.getRelatedEntityId());
+        if (n.getRelatedEntityId() != null && n.getRelatedEntityType() != null) {
+            switch (n.getRelatedEntityType()) {
+                case PROJECT -> dto.setLink("/projects/" + n.getRelatedEntityId());
+                case LEAD -> dto.setLink("/leads/" + n.getRelatedEntityId());
+                default -> { /* pozostałe typy bez linku */ }
+            }
         }
         return dto;
     }

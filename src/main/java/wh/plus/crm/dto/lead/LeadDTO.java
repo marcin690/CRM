@@ -53,6 +53,9 @@ public class LeadDTO {
     /** Pełny URL strony z której przyszedł lead (np. LP /wycena). */
     private String sourceUrl;
 
+    /** Atrybucja marketingowa (Google Ads / UTM) — do raportów i eksportu do BigQuery. */
+    private String gclid, utmSource, utmMedium, utmCampaign, utmTerm, utmContent;
+
     private String createdBy;
     private String lastModifiedBy;
     private LocalDateTime lastModifiedDate;

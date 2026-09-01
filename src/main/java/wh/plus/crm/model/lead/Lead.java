@@ -102,6 +102,26 @@ public class Lead extends Auditable<String>  {
     @Column(name = "source_url", length = 500)
     private String sourceUrl;
 
+    // ── Atrybucja marketingowa (Google Ads / UTM) — osobne kolumny pod raporty i BigQuery ──
+    /** Identyfikator kliknięcia Google Ads (gclid) — klucz łączenia leada z kampanią w Ads/BigQuery. */
+    @Column(name = "gclid", length = 512)
+    private String gclid;
+
+    @Column(name = "utm_source", length = 255)
+    private String utmSource;
+
+    @Column(name = "utm_medium", length = 255)
+    private String utmMedium;
+
+    @Column(name = "utm_campaign", length = 255)
+    private String utmCampaign;
+
+    @Column(name = "utm_term", length = 255)
+    private String utmTerm;
+
+    @Column(name = "utm_content", length = 255)
+    private String utmContent;
+
     @Override
     public String getClientGlobalId() {
         return clientGlobalId;

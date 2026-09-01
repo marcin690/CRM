@@ -16,6 +16,10 @@ import wh.plus.crm.repository.LeadRepository;
 import wh.plus.crm.repository.LeadSourceRepository;
 import wh.plus.crm.service.ClientGlobalIdService;
 import wh.plus.crm.service.MinioUploadService;
+import wh.plus.crm.model.EntityType;
+import wh.plus.crm.model.notification.NotificationTriggerType;
+import wh.plus.crm.service.notification.NotificationTriggerService;
+import wh.plus.crm.service.notification.TriggerContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
@@ -51,12 +55,16 @@ public class PublicLeadController {
     private final LeadSourceRepository leadSourceRepository;
     private final ClientGlobalIdService clientGlobalIdService;
     private final MinioUploadService minioUploadService;
+    private final NotificationTriggerService notificationTriggerService;
 
     @Value("${recaptcha.secret-key:}")
     private String recaptchaSecretKey;
 
     @Value("${recaptcha.min-score:0.5}")
     private double recaptchaMinScore;
+
+    @Value("${app.crm.base-url:https://crm.w-h.pl}")
+    private String crmBaseUrl;
 
     private static final int MAX_FILES = 8;
     private static final long MAX_FILE_BYTES = 15L * 1024 * 1024; // 15 MB / plik
@@ -160,10 +168,22 @@ public class PublicLeadController {
         lead.setReturningClient(returningClient != null ? returningClient : Boolean.FALSE);
         lead.setSourceUrl(truncate(trim(sourceUrl), 500));
 
+        // Atrybucja marketingowa → osobne pola (pod raporty / BigQuery). Opis zostaje bez zmian.
+        Map<String, String> utm = parseUtmParams(sourceMeta, sourceUrl);
+        lead.setGclid(truncate(utm.get("gclid"), 512));
+        lead.setUtmSource(truncate(utm.get("utm_source"), 255));
+        lead.setUtmMedium(truncate(utm.get("utm_medium"), 255));
+        lead.setUtmCampaign(truncate(utm.get("utm_campaign"), 255));
+        lead.setUtmTerm(truncate(utm.get("utm_term"), 255));
+        lead.setUtmContent(truncate(utm.get("utm_content"), 255));
+
         Lead saved = leadRepository.save(lead);
         log.info("Public lead saved id={} source='{}' attachments={} ip={}",
                 saved.getId(), lead.getLeadSource() != null ? lead.getLeadSource().getName() : "-",
                 attachmentUrls.size(), ip);
+
+        // Trigger powiadomień o nowym leadzie (async, nigdy nie rzuca — nie wywróci wysyłki formularza).
+        fireNewLeadTrigger(saved);
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -180,6 +200,70 @@ public class PublicLeadController {
         if (s == null) return null;
         return s.length() <= max ? s : s.substring(0, max);
     }
+
+    /**
+     * Wyłuskuje utm_* i gclid z sourceMeta (pary "klucz=wartosc" rozdzielone |, & lub nową linią)
+     * oraz — jako uzupełnienie — z query-stringu sourceUrl. sourceMeta ma pierwszeństwo nad URL-em.
+     */
+    private static Map<String, String> parseUtmParams(String sourceMeta, String sourceUrl) {
+        Map<String, String> out = new java.util.HashMap<>();
+        putKvPairs(out, sourceMeta);
+        int q = (sourceUrl == null) ? -1 : sourceUrl.indexOf('?');
+        if (q >= 0 && q < sourceUrl.length() - 1) {
+            putKvPairs(out, sourceUrl.substring(q + 1));
+        }
+        return out;
+    }
+
+    private static void putKvPairs(Map<String, String> out, String raw) {
+        if (raw == null || raw.isBlank()) return;
+        for (String part : raw.split("[|&\\r\\n]+")) {
+            int eq = part.indexOf('=');
+            if (eq <= 0) continue;
+            String key = part.substring(0, eq).trim().toLowerCase(Locale.ROOT);
+            String val = part.substring(eq + 1).trim();
+            if (val.isEmpty() || out.containsKey(key)) continue; // pierwsze wystąpienie wygrywa
+            if (key.equals("gclid") || key.startsWith("utm_")) {
+                out.put(key, urlDecode(val));
+            }
+        }
+    }
+
+    private static String urlDecode(String s) {
+        try {
+            return java.net.URLDecoder.decode(s, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return s;
+        }
+    }
+
+    /** Buduje kontekst i odpala trigger NEW_LEAD (silnik sam sprawdza czy włączony i do kogo wysłać). */
+    private void fireNewLeadTrigger(Lead lead) {
+        String sourceName = lead.getLeadSource() != null ? lead.getLeadSource().getName() : FALLBACK_SOURCE;
+        String leadUrl = crmBaseUrl + "/leads/" + lead.getId();
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("leadId", lead.getId());
+        vars.put("clientName", nvl(lead.getClientFullName()));
+        vars.put("company", nvl(lead.getClientBusinessName()));
+        vars.put("email", nvl(lead.getClientEmail()));
+        vars.put("phone", lead.getClientPhone() != null ? String.valueOf(lead.getClientPhone()) : "—");
+        vars.put("source", sourceName);
+        vars.put("sourceUrl", nvl(lead.getSourceUrl()));
+        vars.put("leadUrl", leadUrl);
+
+        TriggerContext ctx = new TriggerContext(
+                "Nowy lead z formularza: " + buildLeadName(lead.getClientFullName(), lead.getClientBusinessName()),
+                "Nowy lead z formularza: " + sourceName,
+                "newLeadNotification",
+                vars,
+                EntityType.LEAD,
+                lead.getId()
+        );
+        notificationTriggerService.fire(NotificationTriggerType.NEW_LEAD, ctx);
+    }
+
+    private static String nvl(String s) { return (s == null || s.isBlank()) ? "—" : s; }
 
     private static String buildLeadName(String name, String company) {
         if (!isBlank(company)) return company.trim();
