@@ -37,6 +37,11 @@ public class DifyConfig {
         private String baseUrl;
         /** Klucze API per kod agenta: dify.agent-keys.<code>=app-xxx */
         private Map<String, String> agentKeys = new HashMap<>();
+        /**
+         * Prefiks identyfikatora użytkownika przekazywanego do Dify: {@code <prefix>:<userId>}.
+         * Oddziela środowiska (prod/staging) korzystające z tych samych aplikacji Dify.
+         */
+        private String userPrefix = "wh-crm-prod";
     }
 
     /**
@@ -59,6 +64,18 @@ public class DifyConfig {
         ex.setMaxPoolSize(3);
         ex.setQueueCapacity(100);
         ex.setThreadNamePrefix("valuation-");
+        ex.initialize();
+        return ex;
+    }
+
+    /** Pula wątków dla streamingu czatu AI (jeden wątek pompuje SSE Dify → przeglądarka). */
+    @Bean("aiChatExecutor")
+    public Executor aiChatExecutor() {
+        ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(4);
+        ex.setMaxPoolSize(16);
+        ex.setQueueCapacity(50);
+        ex.setThreadNamePrefix("ai-chat-");
         ex.initialize();
         return ex;
     }

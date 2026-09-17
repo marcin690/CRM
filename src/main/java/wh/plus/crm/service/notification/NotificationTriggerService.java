@@ -47,8 +47,12 @@ public class NotificationTriggerService {
     /**
      * Rozsyła powiadomienie dla danego typu zdarzenia zgodnie z zapisaną konfiguracją.
      * Asynchroniczne + odporne na błędy — loguje, nie propaguje wyjątków.
+     *
+     * Kwalifikator executora jest OBOWIĄZKOWY: od czasu dodania beana aiChatExecutor
+     * istnieją dwa Executory, więc bez qualifiera Spring wpadłby w fallback do
+     * SimpleAsyncTaskExecutor (nieograniczone wątki). Reużywamy istniejącej puli.
      */
-    @Async
+    @Async("valuationExecutor")
     public void fire(NotificationTriggerType type, TriggerContext ctx) {
         try {
             NotificationTrigger trigger = triggerRepository.findByTriggerType(type).orElse(null);
