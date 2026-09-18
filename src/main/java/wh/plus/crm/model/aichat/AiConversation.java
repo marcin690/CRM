@@ -34,6 +34,10 @@ public class AiConversation {
     @Column(nullable = false, length = 16)
     private AiChatApp app;
 
+    /** Poziom modelu: Szybki / Standard / Zaawansowany (blokowany po 1. wiadomości). */
+    @Column(length = 16)
+    private String poziom;
+
     /** conversation_id z Dify — null do pierwszej odpowiedzi. Nie wychodzi poza backend. */
     @Column(name = "dify_conversation_id", length = 64, unique = true)
     private String difyConversationId;

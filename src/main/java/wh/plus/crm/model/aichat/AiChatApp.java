@@ -43,4 +43,37 @@ public enum AiChatApp {
         }
         return null;
     }
+
+    /** Dozwolone poziomy (etykiety zgodne z tym, co przyjmuje zmienna 'poziom' w Dify). */
+    public static final java.util.List<String> POZIOMY = java.util.List.of("Szybki", "Standard", "Zaawansowany");
+
+    /** Normalizuje poziom z requestu do jednej z dozwolonych etykiet (domyślnie Standard). */
+    public static String normPoziom(String p) {
+        if (p != null) {
+            for (String v : POZIOMY) if (v.equalsIgnoreCase(p.trim())) return v;
+        }
+        return "Standard";
+    }
+
+    /** Mapa poziom → konkretny model (do raportu zużycia; musi odpowiadać routingowi w Dify). */
+    public String modelFor(String poziom) {
+        String p = normPoziom(poziom);
+        return switch (this) {
+            case CLAUDE -> switch (p) {
+                case "Szybki" -> "claude-haiku-4-5";
+                case "Zaawansowany" -> "claude-opus-4-6";
+                default -> "claude-sonnet-4-6";
+            };
+            case CHATGPT -> switch (p) {
+                case "Szybki" -> "gpt-5.4-nano";
+                case "Zaawansowany" -> "gpt-5.4";
+                default -> "gpt-5.4-mini";
+            };
+            case GEMINI -> switch (p) {
+                case "Szybki" -> "gemini-2.5-flash-lite";
+                case "Zaawansowany" -> "gemini-3.1-pro-preview";
+                default -> "gemini-3-flash-preview";
+            };
+        };
+    }
 }

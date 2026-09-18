@@ -71,9 +71,11 @@ public class DifyChatStreamer {
      * {@code cancelled} pozwala przerwać czytanie, gdy przeglądarka się rozłączy.
      */
     public void stream(String agentCode, String query, List<FileRef> files, String difyConversationId,
-                       String user, Handler handler, BooleanSupplier cancelled) {
+                       String user, String poziom, Handler handler, BooleanSupplier cancelled) {
         ObjectNode body = mapper.createObjectNode();
-        body.set("inputs", mapper.createObjectNode());
+        ObjectNode inputs = mapper.createObjectNode();
+        if (poziom != null && !poziom.isBlank()) inputs.put("poziom", poziom); // Dify routuje model po tej zmiennej (1. wiadomość)
+        body.set("inputs", inputs);
         body.put("query", query);
         body.put("response_mode", "streaming");
         body.put("user", user);

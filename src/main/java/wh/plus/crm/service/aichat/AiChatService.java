@@ -109,7 +109,8 @@ public class AiChatService {
     }
 
     private AiConversationDto toDto(AiConversation c) {
-        return new AiConversationDto(c.getId(), c.getApp().name(), c.getApp().getLabel(), c.getTitle(), c.getUpdatedAt());
+        return new AiConversationDto(c.getId(), c.getApp().name(), c.getApp().getLabel(), c.getTitle(),
+                c.getPoziom(), c.getUpdatedAt());
     }
 
     /** Pobranie rozmowy z weryfikacją właściciela. 404 dla cudzej/usuniętej/nieistniejącej. */
@@ -138,6 +139,7 @@ public class AiChatService {
         AiConversation c = new AiConversation();
         c.setOwnerUserId(userId);
         c.setApp(app);
+        c.setPoziom(AiChatApp.normPoziom(req.poziom()));
         c.setTitle(req.query().length() > 60 ? req.query().substring(0, 60) : req.query());
         return conversationRepository.save(c);
     }
@@ -170,7 +172,7 @@ public class AiChatService {
         u.setUserEmail(userEmail != null ? userEmail.toLowerCase() : null);
         u.setConversationId(conv.getId());
         u.setApp(conv.getApp());
-        u.setModel(conv.getApp().getDefaultModel());
+        u.setModel(conv.getApp().modelFor(conv.getPoziom()));
         u.setDifyMessageId(messageId);
         u.setPromptTokens(usage.promptTokens());
         u.setCompletionTokens(usage.completionTokens());

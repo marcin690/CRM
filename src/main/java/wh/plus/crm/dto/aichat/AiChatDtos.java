@@ -12,9 +12,9 @@ public final class AiChatDtos {
     public record AiAppDto(String code, String label, String description,
                            String openingStatement, List<String> suggestedQuestions) {}
 
-    /** Pozycja listy rozmów (lokalne id, oznaczenie czatu). */
+    /** Pozycja listy rozmów (lokalne id, oznaczenie czatu, poziom modelu). */
     public record AiConversationDto(Long id, String app, String appLabel, String title,
-                                    LocalDateTime updatedAt) {}
+                                    String poziom, LocalDateTime updatedAt) {}
 
     /** Para pytanie/odpowiedź z historii (treść z Dify). */
     public record AiMessageDto(String id, String query, String answer, LocalDateTime createdAt) {}
@@ -22,8 +22,8 @@ public final class AiChatDtos {
     /** Strona historii (stronicowanie w górę). */
     public record AiMessagesPage(List<AiMessageDto> messages, boolean hasMore) {}
 
-    /** Body POST /api/ai/chat. conversationId puste = nowa rozmowa. */
-    public record ChatRequest(String app, Long conversationId, String query, List<String> fileIds) {}
+    /** Body POST /api/ai/chat. conversationId puste = nowa rozmowa. poziom tylko przy nowej. */
+    public record ChatRequest(String app, Long conversationId, String poziom, String query, List<String> fileIds) {}
 
     public record RenameRequest(String title) {}
 
