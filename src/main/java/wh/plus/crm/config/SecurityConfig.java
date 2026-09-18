@@ -1,5 +1,6 @@
 package wh.plus.crm.config;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -41,8 +42,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable().cors().and()
-                .authorizeRequests(authorizeRequests ->
-                        authorizeRequests
+                .authorizeHttpRequests(authorize ->
+                        authorize
+                                // SSE (czat AI) po zakończeniu robi async-dispatch z powrotem przez łańcuch
+                                // security z anonimowym kontekstem — bez tego leci AccessDenied. Początkowe
+                                // żądanie (DispatcherType.REQUEST) nadal wymaga uwierzytelnienia.
+                                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers(AUTH_WHITELIST).permitAll()
                                 .anyRequest().authenticated()
