@@ -48,6 +48,7 @@ public class OfferService {
     private final ProjectRepository projectRepository;
     private final SalesTeamRepository salesTeamRepository;
     private final LeadStatusRepository leadStatusRepository;
+    private final CurrentUserService currentUserService;
 
     public Page<OfferDTO> getOffers(Pageable pageable) {
 
@@ -56,15 +57,25 @@ public class OfferService {
                 pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "id")
         );
-        return offerRepository.findAll(pageable).map(offerMapper::toOfferDTO);
+        // Widoczność: nie-admin widzi tylko oferty swojego zespołu.
+        Specification<Offer> specification = Specification.where(null);
+        if (!currentUserService.isAdmin()) {
+            specification = specification.and(OfferSpecification.hasSalesTeam(currentUserService.scopeTeamId()));
+        }
+        return offerRepository.findAll(specification, sortedPageable).map(offerMapper::toOfferDTO);
 
     }
 
     public OfferDTO getOfferById(Long id){
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Offer not found"));
-
+        assertTeamAccess(offer);
         return offerMapper.toOfferDTO(offer);
+    }
+
+    /** Nie-admin może dotknąć tylko oferty swojego zespołu. */
+    private void assertTeamAccess(Offer offer) {
+        currentUserService.assertTeamAccess(offer.getSalesTeam() != null ? offer.getSalesTeam().getId() : null);
     }
 
     public Page<OfferDTO> searchOffers(
@@ -72,6 +83,12 @@ public class OfferService {
             OfferStatus offerStatus, ObjectType objectType, String description, Long userId,
             Long clientId, Long leadId, Long projectId, Long salesTeamId, LocalDateTime startDate,
             LocalDateTime endDate, SalesOpportunityLevel salesOpportunityLevel, String archivedFilter, Pageable pageable) {
+
+        // Bezpieczeństwo: nie-admin nie może zobaczyć cudzego zespołu — wymuszamy filtr na jego zespół,
+        // ignorując wartość salesTeamId przysłaną przez klienta.
+        if (!currentUserService.isAdmin()) {
+            salesTeamId = currentUserService.scopeTeamId();
+        }
 
         Specification<Offer> specification = Specification.where(null);
 
@@ -221,6 +238,7 @@ public class OfferService {
     public OfferDTO updateOffer(Long offerId, OfferDTO offerDTO){
 
         Offer existingOffer = offerRepository.findById(offerId).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+        assertTeamAccess(existingOffer);
 
         if (offerDTO.getUser() != null) {
             User user = userRepository.findById(offerDTO.getUser().getId()).orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -386,11 +404,14 @@ public class OfferService {
     }
 
     public void deleteOffer(Long offerId){
+        Offer offer = offerRepository.findById(offerId).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+        assertTeamAccess(offer);
         offerRepository.deleteById(offerId);
     }
 
     public void updateOfferStatus(Long id, OfferStatus offerStatus){
         Offer offer = offerRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+        assertTeamAccess(offer);
         validateStatusTransition(offer.getOfferStatus(), offerStatus);
         offer.setOfferStatus(offerStatus);
         offer.setStatusChangeDate(LocalDateTime.now());
@@ -414,6 +435,7 @@ public class OfferService {
     public OfferDTO resetDecision(Long offerId) {
         Offer offer = offerRepository.findById(offerId)
                 .orElseThrow(() -> new IllegalArgumentException("Offer not found"));
+        assertTeamAccess(offer);
 
         offer.setOfferStatus(OfferStatus.DRAFT);
         offer.setStatusChangeDate(LocalDateTime.now());

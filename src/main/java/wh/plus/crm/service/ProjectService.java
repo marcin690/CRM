@@ -21,9 +21,11 @@ import wh.plus.crm.repository.InvoiceRepository;
 import wh.plus.crm.repository.MontageRepository;
 import wh.plus.crm.repository.OrderRepository;
 import wh.plus.crm.repository.ProjectCommentRepository;
+import org.springframework.data.jpa.domain.Specification;
 import wh.plus.crm.repository.ProjectRepository;
 import wh.plus.crm.repository.ProjectSharePointFileRepository;
 import wh.plus.crm.repository.SalesTeamRepository;
+import wh.plus.crm.specyfications.ProjectSpecification;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
+    private final CurrentUserService currentUserService;
     private final ClientRepository clientRepository;
     private final SalesTeamRepository salesTeamRepository;
     private final InvoiceRepository invoiceRepository;
@@ -48,7 +51,7 @@ public class ProjectService {
                 pageable.getPageNumber(), pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "id")
         );
-        return projectRepository.findAll(sorted).map(projectMapper::projectToProjectDTO);
+        return projectRepository.findAll(teamScope(), sorted).map(projectMapper::projectToProjectDTO);
     }
 
     public Page<ProjectDTO> searchProjects(String search, Pageable pageable) {
@@ -56,13 +59,29 @@ public class ProjectService {
                 pageable.getPageNumber(), pageable.getPageSize(),
                 Sort.by(Sort.Direction.DESC, "id")
         );
-        return projectRepository.searchProject(search, sorted).map(projectMapper::projectToProjectDTO);
+        Specification<Project> spec = teamScope().and(ProjectSpecification.nameContains(search));
+        return projectRepository.findAll(spec, sorted).map(projectMapper::projectToProjectDTO);
+    }
+
+    /** Filtr widoczności: nie-admin widzi tylko projekty swojego zespołu. */
+    private Specification<Project> teamScope() {
+        Specification<Project> spec = Specification.where(null);
+        if (!currentUserService.isAdmin()) {
+            spec = spec.and(ProjectSpecification.hasSalesTeam(currentUserService.scopeTeamId()));
+        }
+        return spec;
     }
 
     public ProjectDTO getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        assertTeamAccess(project);
         return projectMapper.projectToProjectDTO(project);
+    }
+
+    /** Nie-admin może dotknąć tylko projektu swojego zespołu. */
+    private void assertTeamAccess(Project p) {
+        currentUserService.assertTeamAccess(p.getSalesTeam() != null ? p.getSalesTeam().getId() : null);
     }
 
     public ProjectDTO createProject(ProjectDTO dto) {
@@ -89,6 +108,7 @@ public class ProjectService {
     public ProjectDTO updateProject(Long id, ProjectDTO dto) {
         Project existing = projectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        assertTeamAccess(existing);
 
         projectMapper.updateProjectFromProjectDTO(dto, existing);
 
@@ -112,6 +132,9 @@ public class ProjectService {
 
     @Transactional
     public void deleteProject(Long id) {
+        Project toDelete = projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        assertTeamAccess(toDelete);
         // Dzieci bez kaskady od strony Project — usuwamy jawnie w kolejności zależności.
         // 1. Faktury (referują wiązanie Fakturowni, które zaraz zniknie kaskadą).
         invoiceRepository.deleteAll(invoiceRepository.findAllByBinding_Project_IdOrderByIssueDateDesc(id));

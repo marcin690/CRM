@@ -33,7 +33,7 @@ public class SecurityConfig {
     }
 
     private static final String[] AUTH_WHITELIST = {
-            "/auth/register",
+            // /auth/register NIE jest publiczny — tworzenie kont tylko przez admina (POST /users).
             "/auth/login",
             "/api/form-submissions",   // publiczny endpoint dla landing-page'y (PublicLeadController)
             "/api/form-submissions/**"

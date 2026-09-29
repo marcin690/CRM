@@ -1,0 +1,182 @@
+package wh.plus.crm.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO;
+import wh.plus.crm.dto.dashboard.SalesInsightsDTO;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Generuje wnioski AI (Claude / Anthropic Messages API) na podstawie agregatów cockpitu.
+ * Wynik cache'owany per okres (TTL 2h), aby nie palić tokenów przy każdym wejściu na stronę.
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SalesInsightsService {
+
+    private final SalesAnalyticsService analyticsService;
+    private final ObjectMapper objectMapper;
+
+    @Value("${anthropic.api-key:}")
+    private String apiKey;
+    @Value("${anthropic.model:claude-sonnet-5}")
+    private String model;
+    @Value("${anthropic.base-url:https://api.anthropic.com}")
+    private String baseUrl;
+    @Value("${anthropic.workspace-id:}")
+    private String workspaceId;
+
+    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    private final ConcurrentHashMap<String, Cached> cache = new ConcurrentHashMap<>();
+    private static final long TTL_MS = 2 * 60 * 60 * 1000L;
+    private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    private record Cached(long ts, SalesInsightsDTO dto) {}
+
+    public SalesInsightsDTO getInsights(LocalDate dateFrom, LocalDate dateTo, boolean refresh, Long teamId) {
+        String key = dateFrom + "|" + dateTo + "|" + teamId;
+        Cached c = cache.get(key);
+        if (!refresh && c != null && (System.currentTimeMillis() - c.ts()) < TTL_MS) {
+            return c.dto();
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            return error("Brak klucza Anthropic — ustaw ANTHROPIC_API_KEY (local.properties / zmienna środowiskowa).");
+        }
+        SalesAnalyticsDTO analytics = analyticsService.getAnalytics(dateFrom, dateTo, null, null, teamId);
+        SalesInsightsDTO dto = callClaude(analytics, dateFrom, dateTo);
+        if (dto.getError() == null) {
+            cache.put(key, new Cached(System.currentTimeMillis(), dto));
+        }
+        return dto;
+    }
+
+    private SalesInsightsDTO callClaude(SalesAnalyticsDTO analytics, LocalDate from, LocalDate to) {
+        try {
+            String system = """
+                    Jesteś doświadczonym analitykiem sprzedaży w firmie WH-Plus (producent mebli i wyposażenia \
+                    wnętrz hotelowych, B2B, wysokie kontrakty). Analizujesz pipeline lead → oferta → umowa. \
+                    Piszesz WYŁĄCZNIE po polsku, rzeczowo, z konkretnymi liczbami z danych, bez marketingowego lania wody. \
+                    Zwróć TYLKO surowy JSON (bez bloków ```), dokładnie w formacie: \
+                    {"summary": "2-3 zdania oceny sytuacji", "wnioski": ["..."], "rekomendacje": ["..."], "ryzyka": ["..."]}. \
+                    wnioski: 3-5 pozycji, rekomendacje: 2-3, ryzyka: 1-3. Każda pozycja to jedno konkretne zdanie z liczbą, \
+                    jeśli to możliwe. Nie dodawaj żadnego tekstu poza JSON-em.""";
+
+            String analyticsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(analytics);
+            String userContent = "Dane sprzedaży za okres " + from + " – " + to + ":\n" + analyticsJson;
+
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("model", model);
+            body.put("max_tokens", 1024);
+            body.put("system", system);
+            ArrayNode messages = body.putArray("messages");
+            ObjectNode msg = messages.addObject();
+            msg.put("role", "user");
+            msg.put("content", userContent);
+
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl.replaceAll("/+$", "") + "/v1/messages"))
+                    .timeout(Duration.ofSeconds(60))
+                    .header("content-type", "application/json")
+                    .header("x-api-key", apiKey)
+                    .header("anthropic-version", "2023-06-01")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)));
+            if (workspaceId != null && !workspaceId.isBlank()) {
+                reqBuilder.header("anthropic-workspace-id", workspaceId);
+            }
+            HttpRequest req = reqBuilder.build();
+
+            HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
+            if (res.statusCode() != 200) {
+                log.warn("Anthropic API zwróciło {}: {}", res.statusCode(), snippet(res.body()));
+                return error("Anthropic API zwróciło status " + res.statusCode() + ".");
+            }
+
+            JsonNode root = objectMapper.readTree(res.body());
+            JsonNode content = root.path("content");
+            if (!content.isArray() || content.isEmpty()) {
+                return error("Pusta odpowiedź modelu.");
+            }
+            // Model może zwrócić blok 'thinking' przed 'text' — sklejamy wszystkie bloki tekstowe.
+            StringBuilder sb = new StringBuilder();
+            for (JsonNode block : content) {
+                if ("text".equals(block.path("type").asText())) {
+                    sb.append(block.path("text").asText(""));
+                }
+            }
+            return parsePayload(sb.toString());
+
+        } catch (Exception e) {
+            log.error("Błąd generowania wniosków AI cockpitu", e);
+            return error("Błąd połączenia z Anthropic: " + e.getMessage());
+        }
+    }
+
+    private SalesInsightsDTO parsePayload(String text) {
+        try {
+            String cleaned = stripFences(text);
+            JsonNode node = objectMapper.readTree(cleaned);
+            SalesInsightsDTO dto = new SalesInsightsDTO();
+            dto.setSummary(node.path("summary").asText(""));
+            dto.setWnioski(toList(node.path("wnioski")));
+            dto.setRekomendacje(toList(node.path("rekomendacje")));
+            dto.setRyzyka(toList(node.path("ryzyka")));
+            dto.setModel(model);
+            dto.setGeneratedAt(LocalDateTime.now().format(TS));
+            return dto;
+        } catch (Exception e) {
+            log.warn("Nie udało się sparsować JSON od modelu: {}", snippet(text));
+            return error("Model zwrócił odpowiedź w nieoczekiwanym formacie.");
+        }
+    }
+
+    private List<String> toList(JsonNode arr) {
+        List<String> out = new ArrayList<>();
+        if (arr != null && arr.isArray()) {
+            arr.forEach(n -> out.add(n.asText()));
+        }
+        return out;
+    }
+
+    private String stripFences(String text) {
+        String t = text == null ? "" : text.trim();
+        if (t.startsWith("```")) {
+            int nl = t.indexOf('\n');
+            if (nl > 0) t = t.substring(nl + 1);
+            if (t.endsWith("```")) t = t.substring(0, t.length() - 3);
+        }
+        int start = t.indexOf('{');
+        int end = t.lastIndexOf('}');
+        if (start >= 0 && end > start) t = t.substring(start, end + 1);
+        return t.trim();
+    }
+
+    private String snippet(String s) {
+        if (s == null) return "";
+        return s.length() > 300 ? s.substring(0, 300) : s;
+    }
+
+    private SalesInsightsDTO error(String msg) {
+        SalesInsightsDTO dto = new SalesInsightsDTO();
+        dto.setError(msg);
+        dto.setModel(model);
+        return dto;
+    }
+}

@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import wh.plus.crm.model.Role;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @JsonIgnoreProperties({
-         "roles", "authorities", "phone",
+         "roles", "authorities", "phone", "permissions",
         "enabled", "salesRepresentative", "accountNonExpired",
         "accountNonLocked", "credentialsNonExpired"
 })
@@ -33,6 +34,7 @@ public class User implements UserDetails {
     private String username;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     private String email;
@@ -80,6 +82,14 @@ public class User implements UserDetails {
     @JoinColumn(name = "team_id")
     private SalesTeam team;
 
+    /**
+     * Uprawnienia modułowe nadawane per użytkownik (poza uprawnieniami z roli).
+     * Klucze modułów, np. "REPORTS". ADMIN ma dostęp do wszystkiego niezależnie od tego zbioru.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_permissions", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "permission")
+    private Set<String> permissions = new HashSet<>();
 
 
 }

@@ -21,11 +21,16 @@ public class FinancialReportService {
 
     private final ProjectRepository projectRepository;
     private final ProjectFinanceService financeService;
+    private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
     public List<FinancialOverviewDTO> overview() {
+        currentUserService.requireReports();
         List<FinancialOverviewDTO> out = new ArrayList<>();
-        for (Project p : projectRepository.findAll()) {
+        List<Project> projects = currentUserService.isAdmin()
+                ? projectRepository.findAll()
+                : projectRepository.findAllBySalesTeam_Id(currentUserService.scopeTeamId());
+        for (Project p : projects) {
             FinancialOverviewDTO d = new FinancialOverviewDTO();
             d.setProjectId(p.getId());
             d.setName(p.getName());

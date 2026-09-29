@@ -41,6 +41,7 @@ public class AuthController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/register")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password cannot be null or empty");
@@ -83,10 +84,16 @@ public class AuthController {
         List<String> authorities = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        return ResponseEntity.ok(Map.of(
-                "username", username,
-                "authorities", authorities
-        ));
+        List<String> permissions = (principal instanceof User u && u.getPermissions() != null)
+                ? List.copyOf(u.getPermissions())
+                : List.of();
+        Long teamId = (principal instanceof User u && u.getTeam() != null) ? u.getTeam().getId() : null;
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("username", username);
+        body.put("authorities", authorities);
+        body.put("permissions", permissions);
+        body.put("teamId", teamId);
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/login")
