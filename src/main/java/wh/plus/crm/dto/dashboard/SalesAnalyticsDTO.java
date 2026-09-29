@@ -63,6 +63,7 @@ public class SalesAnalyticsDTO {
 
     @Data @NoArgsConstructor @AllArgsConstructor
     public static class RepRow {
+        private Long id;
         private String name;
         private String mainSource;
         private long leads;

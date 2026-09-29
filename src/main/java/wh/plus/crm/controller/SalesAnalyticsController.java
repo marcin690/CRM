@@ -7,8 +7,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.server.ResponseStatusException;
+import wh.plus.crm.dto.dashboard.RepDetailDTO;
 import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO;
 import wh.plus.crm.dto.dashboard.SalesInsightsDTO;
+import wh.plus.crm.model.user.User;
+import wh.plus.crm.repository.UserRepository;
 import wh.plus.crm.service.CurrentUserService;
 import wh.plus.crm.service.SalesAnalyticsService;
 import wh.plus.crm.service.SalesInsightsService;
@@ -27,6 +33,7 @@ public class SalesAnalyticsController {
     private final SalesAnalyticsService salesAnalyticsService;
     private final SalesInsightsService salesInsightsService;
     private final CurrentUserService currentUserService;
+    private final UserRepository userRepository;
 
     @GetMapping
     public ResponseEntity<SalesAnalyticsDTO> getSalesAnalytics(
@@ -50,5 +57,19 @@ public class SalesAnalyticsController {
         currentUserService.requireReports();
         Long teamId = currentUserService.scopeTeamId();
         return ResponseEntity.ok(salesInsightsService.getInsights(dateFrom, dateTo, refresh, teamId));
+    }
+
+    /** Drill-down handlowca. Dostęp: admin lub manager/pracownik z tego samego zespołu co dany handlowiec. */
+    @GetMapping("/rep/{userId}")
+    public ResponseEntity<RepDetailDTO> repDetail(
+            @PathVariable Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
+    ) {
+        currentUserService.requireReports();
+        User rep = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nie znaleziono handlowca"));
+        currentUserService.assertTeamAccess(rep.getTeam() != null ? rep.getTeam().getId() : null);
+        return ResponseEntity.ok(salesAnalyticsService.getRepDetail(userId, dateFrom, dateTo));
     }
 }

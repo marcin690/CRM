@@ -2,12 +2,14 @@ package wh.plus.crm.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import wh.plus.crm.dto.dashboard.RepDetailDTO;
 import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO;
 import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO.*;
 import wh.plus.crm.model.RejectionReason;
 import wh.plus.crm.model.lead.ClientType;
 import wh.plus.crm.repository.LeadRepository;
 import wh.plus.crm.repository.OfferRepository;
+import wh.plus.crm.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,6 +29,7 @@ public class SalesAnalyticsService {
 
     private final LeadRepository leadRepository;
     private final OfferRepository offerRepository;
+    private final UserRepository userRepository;
 
     private static final String[] PL_MONTHS = {"sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"};
     private static final int TOP_REASONS = 6;
@@ -59,6 +62,57 @@ public class SalesAnalyticsService {
             dto.setKpiCompare(buildKpi(compareFrom.atStartOfDay(), compareTo.atTime(23, 59, 59), teamId));
         }
         return dto;
+    }
+
+    // ---------- Drill-down handlowca ----------
+    public RepDetailDTO getRepDetail(Long userId, LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom == null || dateTo == null) {
+            LocalDate today = LocalDate.now();
+            dateFrom = today.withDayOfMonth(1).minusMonths(2);
+            dateTo = today;
+        }
+        LocalDateTime since = dateFrom.atStartOfDay();
+        LocalDateTime until = dateTo.atTime(23, 59, 59);
+
+        Object[] lt = first(leadRepository.repLeadTotals(userId, since, until), new Object[]{0L, BigDecimal.ZERO});
+        Object[] ot = first(offerRepository.repOfferTotals(userId, since, until), new Object[]{0L, 0L, 0L, BigDecimal.ZERO});
+        long leads = lng(lt[0]);
+        BigDecimal pipeline = bd(lt[1]);
+        long offers = lng(ot[0]), accepted = lng(ot[1]), signed = lng(ot[2]);
+        BigDecimal signedValue = bd(ot[3]);
+        double conv = leads > 0 ? (signed * 100.0) / leads : 0.0;
+        BigDecimal avg = signed > 0 ? signedValue.divide(BigDecimal.valueOf(signed), 0, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        Kpi kpi = new Kpi(leads, offers, signed, round1(conv), pipeline, avg);
+
+        Double l2o = offerRepository.repAvgLeadToOfferDays(userId, since, until);
+        Double o2s = offerRepository.repAvgOfferToSignDays(userId, since, until);
+        Timing timing = new Timing(l2o != null ? (int) Math.round(l2o) : null, o2s != null ? (int) Math.round(o2s) : null);
+
+        Funnel funnel = new Funnel(leads, offers, accepted, signed);
+
+        Map<String, Long> signedBySource = new HashMap<>();
+        for (Object[] r : offerRepository.repSignedBySource(userId, since, until)) {
+            signedBySource.put(str(r[0]), lng(r[1]));
+        }
+        List<SourceRow> sources = new ArrayList<>();
+        for (Object[] r : leadRepository.repLeadsBySource(userId, since, until)) {
+            String name = str(r[0]);
+            long l = lng(r[1]);
+            BigDecimal v = bd(r[2]);
+            long s = signedBySource.getOrDefault(name, 0L);
+            sources.add(new SourceRow(name, l, v, round1(l > 0 ? (s * 100.0) / l : 0.0), s));
+        }
+        sources.sort(Comparator.comparing(SourceRow::getValue).reversed());
+
+        List<RepDetailDTO.ReasonCount> reasons = new ArrayList<>();
+        for (Object[] r : leadRepository.repReasons(userId, since, until)) {
+            RejectionReason rr = (RejectionReason) r[0];
+            reasons.add(new RepDetailDTO.ReasonCount(rr != null ? rr.getDescription() : "Inne", lng(r[1])));
+        }
+        reasons.sort(Comparator.comparingLong(RepDetailDTO.ReasonCount::getCount).reversed());
+
+        String name = userRepository.findById(userId).map(u -> u.getFullname()).orElse("Handlowiec");
+        return new RepDetailDTO(userId, name, kpi, timing, funnel, sources, reasons);
     }
 
     // ---------- KPI ----------
@@ -135,6 +189,7 @@ public class SalesAnalyticsService {
             double conv = leads > 0 ? (signed * 100.0) / leads : 0.0;
             RejectionReason reason = topReasonEnum.get(userId);
             out.add(new RepRow(
+                    userId,
                     name,
                     mainSource.getOrDefault(userId, "—"),
                     leads,

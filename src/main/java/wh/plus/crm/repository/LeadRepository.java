@@ -112,4 +112,17 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
            "GROUP BY u.id, u.fullname, l.rejectionReason")
     List<Object[]> analyticsReasonByRep(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
+    // ---- Drill-down pojedynczego handlowca (userId zawsze podany) ----
+    @Query("SELECT COUNT(l), COALESCE(SUM(l.leadValue),0) FROM Lead l " +
+           "WHERE l.user.id = :userId AND l.creationDate >= :since AND l.creationDate <= :until")
+    List<Object[]> repLeadTotals(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
+    @Query("SELECT l.leadSource.name, COUNT(l), COALESCE(SUM(l.leadValue),0) FROM Lead l " +
+           "WHERE l.user.id = :userId AND l.creationDate >= :since AND l.creationDate <= :until GROUP BY l.leadSource.name")
+    List<Object[]> repLeadsBySource(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
+    @Query("SELECT l.rejectionReason, COUNT(l) FROM Lead l " +
+           "WHERE l.user.id = :userId AND l.rejectionReason IS NOT NULL AND l.creationDate >= :since AND l.creationDate <= :until GROUP BY l.rejectionReason")
+    List<Object[]> repReasons(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
 }

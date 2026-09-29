@@ -97,4 +97,25 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "GROUP BY YEAR(o.signedContractDate), MONTH(o.signedContractDate)")
     List<Object[]> analyticsSignedByMonth(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
+    // ---- Drill-down pojedynczego handlowca (userId zawsze podany) ----
+    @Query("SELECT COUNT(o), " +
+            "SUM(CASE WHEN (o.offerStatus = 'ACCEPTED' OR o.offerStatus = 'SIGNED') THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN 1 ELSE 0 END), " +
+            "COALESCE(SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN o.totalPrice ELSE 0 END), 0) " +
+            "FROM Offer o WHERE o.user.id = :userId AND o.creationDate >= :since AND o.creationDate <= :until")
+    List<Object[]> repOfferTotals(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
+    @Query("SELECT o.lead.leadSource.name, COUNT(o) FROM Offer o " +
+            "WHERE o.user.id = :userId AND o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND o.lead IS NOT NULL " +
+            "GROUP BY o.lead.leadSource.name")
+    List<Object[]> repSignedBySource(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
+    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate)) FROM Offer o " +
+            "WHERE o.user.id = :userId AND o.lead IS NOT NULL AND o.creationDate >= :since AND o.creationDate <= :until")
+    Double repAvgLeadToOfferDays(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
+    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate)) FROM Offer o " +
+            "WHERE o.user.id = :userId AND o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until")
+    Double repAvgOfferToSignDays(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
+
 }
