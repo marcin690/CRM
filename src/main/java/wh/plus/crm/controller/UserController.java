@@ -24,8 +24,9 @@ public class UserController {
     private UserRepository userRepository;
 
 
+    // Lista userów potrzebna zalogowanym (filtry „handlowiec", przypisania w projektach/ofertach).
+    // Zwraca UserDTO bez hasła; zarządzanie (create/edit/delete/access) pozostaje admin-only.
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<UserDTO>> findAll() {
         List<UserDTO> users = userService.findAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
