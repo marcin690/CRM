@@ -81,6 +81,16 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "GROUP BY YEAR(o.creationDate), MONTH(o.creationDate)")
     List<Object[]> analyticsOffersByMonth(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
+    /** śr. liczba dni od utworzenia leada do utworzenia oferty (ile zajmuje przejście lead->oferta) */
+    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate)) FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.lead IS NOT NULL AND o.creationDate >= :since AND o.creationDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
+    Double analyticsAvgLeadToOfferDays(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
+    /** śr. liczba dni od utworzenia oferty do podpisania umowy (ile trwa ofertowanie) */
+    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate)) FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
+    Double analyticsAvgOfferToSignDays(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
     /** rok, miesiac, liczba podpisanych umów (wg daty podpisu) */
     @Query("SELECT YEAR(o.signedContractDate), MONTH(o.signedContractDate), COUNT(o) FROM Offer o LEFT JOIN o.salesTeam st " +
             "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND (:teamId IS NULL OR st.id = :teamId) " +

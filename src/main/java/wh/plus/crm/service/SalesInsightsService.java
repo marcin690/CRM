@@ -37,8 +37,10 @@ public class SalesInsightsService {
 
     @Value("${anthropic.api-key:}")
     private String apiKey;
-    @Value("${anthropic.model:claude-sonnet-5}")
+    @Value("${anthropic.model:claude-opus-4-8}")
     private String model;
+    @Value("${anthropic.max-tokens:4096}")
+    private int maxTokens;
     @Value("${anthropic.base-url:https://api.anthropic.com}")
     private String baseUrl;
     @Value("${anthropic.workspace-id:}")
@@ -72,8 +74,9 @@ public class SalesInsightsService {
         try {
             String system = """
                     Jesteś doświadczonym analitykiem sprzedaży w firmie WH-Plus (producent mebli i wyposażenia \
-                    wnętrz hotelowych, B2B, wysokie kontrakty). Analizujesz pipeline lead → oferta → umowa. \
+                    wnętrz hotelowych, B2B, wysokie kontrakty). Analizujesz pipeline lead do oferty do umowy. \
                     Piszesz WYŁĄCZNIE po polsku, rzeczowo, z konkretnymi liczbami z danych, bez marketingowego lania wody. \
+                    NIE używaj myślnika ani pauzy (—); pisz zwykłymi, pełnymi zdaniami. \
                     Zwróć TYLKO surowy JSON (bez bloków ```), dokładnie w formacie: \
                     {"summary": "2-3 zdania oceny sytuacji", "wnioski": ["..."], "rekomendacje": ["..."], "ryzyka": ["..."]}. \
                     wnioski: 3-5 pozycji, rekomendacje: 2-3, ryzyka: 1-3. Każda pozycja to jedno konkretne zdanie z liczbą, \
@@ -84,7 +87,7 @@ public class SalesInsightsService {
 
             ObjectNode body = objectMapper.createObjectNode();
             body.put("model", model);
-            body.put("max_tokens", 1024);
+            body.put("max_tokens", maxTokens);
             body.put("system", system);
             ArrayNode messages = body.putArray("messages");
             ObjectNode msg = messages.addObject();

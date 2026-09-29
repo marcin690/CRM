@@ -18,6 +18,7 @@ public class SalesAnalyticsDTO {
 
     private Kpi kpi;
     private Kpi kpiCompare;              // opcjonalnie: ten sam zestaw KPI dla okresu porównawczego (null jeśli brak)
+    private Timing timing;
     private Funnel funnel;
     private List<SourceRow> sources;
     private List<RepRow> reps;
@@ -35,6 +36,12 @@ public class SalesAnalyticsDTO {
         private double conversionRate;      // signed / leads * 100
         private BigDecimal pipelineValue;   // suma leadValue
         private BigDecimal avgContractValue;// średnia wartość podpisanej umowy
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class Timing {
+        private Integer leadToOfferDays;   // śr. dni od leada do pierwszej oferty
+        private Integer offerToSignDays;   // śr. dni od utworzenia oferty do podpisania (ile trwa ofertowanie)
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor

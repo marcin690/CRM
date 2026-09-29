@@ -45,6 +45,7 @@ public class SalesAnalyticsService {
 
         SalesAnalyticsDTO dto = new SalesAnalyticsDTO();
         dto.setKpi(buildKpi(since, until, teamId));
+        dto.setTiming(buildTiming(since, until, teamId));
         dto.setFunnel(buildFunnel(since, until, teamId));
         dto.setSources(buildSources(since, until, teamId));
         dto.setReps(buildReps(since, until, teamId));
@@ -77,6 +78,16 @@ public class SalesAnalyticsService {
                 : BigDecimal.ZERO;
 
         return new Kpi(leads, offers, signed, round1(conversion), pipeline, avgContract);
+    }
+
+    // ---------- Czasy procesu ----------
+    private Timing buildTiming(LocalDateTime since, LocalDateTime until, Long teamId) {
+        Double leadToOffer = offerRepository.analyticsAvgLeadToOfferDays(since, until, teamId);
+        Double offerToSign = offerRepository.analyticsAvgOfferToSignDays(since, until, teamId);
+        return new Timing(
+                leadToOffer != null ? (int) Math.round(leadToOffer) : null,
+                offerToSign != null ? (int) Math.round(offerToSign) : null
+        );
     }
 
     // ---------- Lejek ----------
