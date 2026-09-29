@@ -52,11 +52,14 @@ public class SalesAnalyticsController {
     public ResponseEntity<SalesInsightsDTO> getInsights(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            @RequestParam(required = false, defaultValue = "false") boolean refresh
+            @RequestParam(required = false, defaultValue = "false") boolean refresh,
+            @RequestParam(required = false) Long teamId
     ) {
         currentUserService.requireReports();
-        Long teamId = currentUserService.scopeTeamId();
-        return ResponseEntity.ok(salesInsightsService.getInsights(dateFrom, dateTo, refresh, teamId));
+        // Admin: może wybrać analizę ogólną (teamId=null) lub konkretnego zespołu (teamId=X).
+        // Pozostali: zawsze wymuszony własny zespół, parametr klienta ignorowany.
+        Long effectiveTeam = currentUserService.isAdmin() ? teamId : currentUserService.scopeTeamId();
+        return ResponseEntity.ok(salesInsightsService.getInsights(dateFrom, dateTo, refresh, effectiveTeam));
     }
 
     /** Drill-down handlowca. Dostęp: admin lub manager/pracownik z tego samego zespołu co dany handlowiec. */
