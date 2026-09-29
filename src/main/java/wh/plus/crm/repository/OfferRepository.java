@@ -82,12 +82,12 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
     List<Object[]> analyticsOffersByMonth(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
     /** śr. liczba dni od utworzenia leada do utworzenia oferty (ile zajmuje przejście lead->oferta) */
-    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate)) FROM Offer o LEFT JOIN o.salesTeam st " +
+    @Query("SELECT AVG(cast(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate) as integer)) FROM Offer o LEFT JOIN o.salesTeam st " +
             "WHERE o.lead IS NOT NULL AND o.creationDate >= :since AND o.creationDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
     Double analyticsAvgLeadToOfferDays(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
     /** śr. liczba dni od utworzenia oferty do podpisania umowy (ile trwa ofertowanie) */
-    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate)) FROM Offer o LEFT JOIN o.salesTeam st " +
+    @Query("SELECT AVG(cast(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate) as integer)) FROM Offer o LEFT JOIN o.salesTeam st " +
             "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
     Double analyticsAvgOfferToSignDays(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
@@ -110,11 +110,11 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "GROUP BY o.lead.leadSource.name")
     List<Object[]> repSignedBySource(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
-    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate)) FROM Offer o " +
+    @Query("SELECT AVG(cast(FUNCTION('DATEDIFF', o.creationDate, o.lead.creationDate) as integer)) FROM Offer o " +
             "WHERE o.user.id = :userId AND o.lead IS NOT NULL AND o.creationDate >= :since AND o.creationDate <= :until")
     Double repAvgLeadToOfferDays(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
-    @Query("SELECT AVG(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate)) FROM Offer o " +
+    @Query("SELECT AVG(cast(FUNCTION('DATEDIFF', o.signedContractDate, o.creationDate) as integer)) FROM Offer o " +
             "WHERE o.user.id = :userId AND o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until")
     Double repAvgOfferToSignDays(@Param("userId") Long userId, @Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
