@@ -60,7 +60,7 @@ public class SalesInsightsService {
             return c.dto();
         }
         if (apiKey == null || apiKey.isBlank()) {
-            return error("Brak klucza Anthropic — ustaw ANTHROPIC_API_KEY (local.properties / zmienna środowiskowa).");
+            return error("Brak klucza Anthropic. Ustaw ANTHROPIC_API_KEY (local.properties lub zmienna środowiskowa).");
         }
         SalesAnalyticsDTO analytics = analyticsService.getAnalytics(dateFrom, dateTo, null, null, teamId);
         SalesInsightsDTO dto = callClaude(analytics, dateFrom, dateTo);
@@ -74,16 +74,27 @@ public class SalesInsightsService {
         try {
             String system = """
                     Jesteś doświadczonym analitykiem sprzedaży w firmie WH-Plus (producent mebli i wyposażenia \
-                    wnętrz hotelowych, B2B, wysokie kontrakty). Analizujesz pipeline lead do oferty do umowy. \
+                    wnętrz hotelowych, B2B, wysokie kontrakty). Analizujesz CAŁY cykl sprzedaży: lead, oferta, umowa. \
+                    Dane wejściowe zawierają obie perspektywy: LEADY (kpi, sources, reps, clients, industries, trend, \
+                    heatmapy powodów odrzucenia leadów) oraz OFERTY (offers.statuses to rozkład statusów DRAFT/SENT/\
+                    ACCEPTED/REJECTED/SIGNED z liczbą i wartością, offers.winRate to procent wygranych wśród rozstrzygniętych, \
+                    offers.rejectionReasons to powody odrzucenia OFERT, offers.objectTypes i offers.investorTypes to segmentacja \
+                    wartościowa), a także konwersje między etapami (cycle: lead do oferty, oferta do wysłania, wysłana do \
+                    akceptacji, akceptacja do podpisania) i czasy procesu (timing). \
+                    W analizie obowiązkowo połącz obie perspektywy: oceń nie tylko dopływ i jakość leadów, ale przede wszystkim \
+                    skuteczność ofertowania (win-rate, struktura statusów, wartość utracona w odrzuconych ofertach, wąskie gardła \
+                    między etapami, najcenniejsze segmenty obiektów i inwestorów). Wskaż, na którym etapie cyklu firma traci \
+                    najwięcej i co z tego wynika. \
                     Piszesz WYŁĄCZNIE po polsku, rzeczowo, z konkretnymi liczbami z danych, bez marketingowego lania wody. \
                     NIE używaj myślnika ani pauzy (—); pisz zwykłymi, pełnymi zdaniami. \
                     Zwróć TYLKO surowy JSON (bez bloków ```), dokładnie w formacie: \
                     {"summary": "2-3 zdania oceny sytuacji", "wnioski": ["..."], "rekomendacje": ["..."], "ryzyka": ["..."]}. \
-                    wnioski: 3-5 pozycji, rekomendacje: 2-3, ryzyka: 1-3. Każda pozycja to jedno konkretne zdanie z liczbą, \
-                    jeśli to możliwe. Nie dodawaj żadnego tekstu poza JSON-em.""";
+                    wnioski: 4-6 pozycji (w tym co najmniej dwie o ofertach lub konwersji między etapami), rekomendacje: 2-4, \
+                    ryzyka: 1-3. Każda pozycja to jedno konkretne zdanie z liczbą, jeśli to możliwe. \
+                    Nie dodawaj żadnego tekstu poza JSON-em.""";
 
             String analyticsJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(analytics);
-            String userContent = "Dane sprzedaży za okres " + from + " – " + to + ":\n" + analyticsJson;
+            String userContent = "Dane pełnego cyklu sprzedaży (leady, oferty, umowy) za okres od " + from + " do " + to + ":\n" + analyticsJson;
 
             ObjectNode body = objectMapper.createObjectNode();
             body.put("model", model);

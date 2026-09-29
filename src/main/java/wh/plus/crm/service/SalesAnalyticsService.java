@@ -7,6 +7,9 @@ import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO;
 import wh.plus.crm.dto.dashboard.SalesAnalyticsDTO.*;
 import wh.plus.crm.model.RejectionReason;
 import wh.plus.crm.model.lead.ClientType;
+import wh.plus.crm.model.offer.InvestorType;
+import wh.plus.crm.model.offer.ObjectType;
+import wh.plus.crm.model.offer.OfferStatus;
 import wh.plus.crm.repository.LeadRepository;
 import wh.plus.crm.repository.OfferRepository;
 import wh.plus.crm.repository.UserRepository;
@@ -49,7 +52,13 @@ public class SalesAnalyticsService {
         SalesAnalyticsDTO dto = new SalesAnalyticsDTO();
         dto.setKpi(buildKpi(since, until, teamId));
         dto.setTiming(buildTiming(since, until, teamId));
-        dto.setFunnel(buildFunnel(since, until, teamId));
+        OfferAnalytics offers = buildOfferAnalytics(since, until, teamId);
+        dto.setOffers(offers);
+        Cycle cycle = buildCycle(dto.getKpi().getLeads(), offers);
+        dto.setCycle(cycle);
+        Funnel funnel = buildFunnel(since, until, teamId);
+        funnel.setSent(cycle.getOffersSent());
+        dto.setFunnel(funnel);
         dto.setSources(buildSources(since, until, teamId));
         dto.setReps(buildReps(since, until, teamId));
         dto.setClients(buildClients(since, until, teamId));
@@ -59,7 +68,23 @@ public class SalesAnalyticsService {
         dto.setReasonByRep(buildReasonByRep(since, until, teamId));
 
         if (compareFrom != null && compareTo != null) {
-            dto.setKpiCompare(buildKpi(compareFrom.atStartOfDay(), compareTo.atTime(23, 59, 59), teamId));
+            LocalDateTime cs = compareFrom.atStartOfDay();
+            LocalDateTime cu = compareTo.atTime(23, 59, 59);
+            Kpi kpiB = buildKpi(cs, cu, teamId);
+            dto.setKpiCompare(kpiB);
+            OfferAnalytics offersB = buildOfferAnalytics(cs, cu, teamId);
+            Cycle cycleB = buildCycle(kpiB.getLeads(), offersB);
+            Funnel funnelB = buildFunnel(cs, cu, teamId);
+            funnelB.setSent(cycleB.getOffersSent());
+            dto.setCompare(new ComparePayload(
+                    kpiB,
+                    buildTiming(cs, cu, teamId),
+                    funnelB,
+                    cycleB,
+                    offersB,
+                    buildSources(cs, cu, teamId),
+                    buildClients(cs, cu, teamId)
+            ));
         }
         return dto;
     }
@@ -88,7 +113,7 @@ public class SalesAnalyticsService {
         Double o2s = offerRepository.repAvgOfferToSignDays(userId, since, until);
         Timing timing = new Timing(l2o != null ? (int) Math.round(l2o) : null, o2s != null ? (int) Math.round(o2s) : null);
 
-        Funnel funnel = new Funnel(leads, offers, accepted, signed);
+        Funnel funnel = new Funnel(leads, offers, null, accepted, signed);
 
         Map<String, Long> signedBySource = new HashMap<>();
         for (Object[] r : offerRepository.repSignedBySource(userId, since, until)) {
@@ -148,7 +173,84 @@ public class SalesAnalyticsService {
     private Funnel buildFunnel(LocalDateTime since, LocalDateTime until, Long teamId) {
         Object[] leadT = first(leadRepository.analyticsLeadTotals(since, until, teamId), new Object[]{0L, BigDecimal.ZERO});
         Object[] offerT = first(offerRepository.analyticsOfferTotals(since, until, teamId), new Object[]{0L, 0L, 0L, BigDecimal.ZERO});
-        return new Funnel(lng(leadT[0]), lng(offerT[0]), lng(offerT[1]), lng(offerT[2]));
+        return new Funnel(lng(leadT[0]), lng(offerT[0]), null, lng(offerT[1]), lng(offerT[2]));
+    }
+
+    // ---------- Analityka ofert: statusy, win-rate, powody odrzucenia, segmenty ----------
+    private OfferAnalytics buildOfferAnalytics(LocalDateTime since, LocalDateTime until, Long teamId) {
+        Map<OfferStatus, Long> counts = new EnumMap<>(OfferStatus.class);
+        Map<OfferStatus, BigDecimal> values = new EnumMap<>(OfferStatus.class);
+        for (Object[] r : offerRepository.analyticsOffersByStatus(since, until, teamId)) {
+            OfferStatus st = (OfferStatus) r[0];
+            if (st == null) continue;
+            counts.merge(st, lng(r[1]), Long::sum);
+            values.merge(st, bd(r[2]), BigDecimal::add);
+        }
+        List<StatusRow> statuses = new ArrayList<>();
+        long total = 0;
+        BigDecimal totalValue = BigDecimal.ZERO;
+        for (OfferStatus st : OfferStatus.values()) {
+            long c = counts.getOrDefault(st, 0L);
+            BigDecimal v = values.getOrDefault(st, BigDecimal.ZERO);
+            statuses.add(new StatusRow(st.name(), st.getDescription(), c, v));
+            total += c;
+            totalValue = totalValue.add(v);
+        }
+        long signed = counts.getOrDefault(OfferStatus.SIGNED, 0L);
+        long rejected = counts.getOrDefault(OfferStatus.REJECTED, 0L);
+        long decided = signed + rejected;
+        double winRate = decided > 0 ? (signed * 100.0) / decided : 0.0;
+        BigDecimal avgOffer = total > 0
+                ? totalValue.divide(BigDecimal.valueOf(total), 0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        List<ReasonRow> reasons = new ArrayList<>();
+        for (Object[] r : offerRepository.analyticsOfferRejectionReasons(since, until, teamId)) {
+            RejectionReason rr = (RejectionReason) r[0];
+            reasons.add(new ReasonRow(rr != null ? rr.getDescription() : "Inne", lng(r[1]), bd(r[2])));
+        }
+        reasons.sort(Comparator.comparingLong(ReasonRow::getCount).reversed());
+
+        List<CategoryRow> objectTypes = new ArrayList<>();
+        for (Object[] r : offerRepository.analyticsOffersByObjectType(since, until, teamId)) {
+            ObjectType ot = (ObjectType) r[0];
+            objectTypes.add(new CategoryRow(ot != null ? ot.getDescription() : "brak", lng(r[1]), bd(r[2]), lng(r[3]), bd(r[4])));
+        }
+        objectTypes.sort(Comparator.comparing(CategoryRow::getValue).reversed());
+
+        List<CategoryRow> investorTypes = new ArrayList<>();
+        for (Object[] r : offerRepository.analyticsOffersByInvestorType(since, until, teamId)) {
+            InvestorType it = (InvestorType) r[0];
+            investorTypes.add(new CategoryRow(it != null ? it.getDescription() : "brak", lng(r[1]), bd(r[2]), lng(r[3]), bd(r[4])));
+        }
+        investorTypes.sort(Comparator.comparing(CategoryRow::getValue).reversed());
+
+        return new OfferAnalytics(statuses, round1(winRate), decided, totalValue, avgOffer, reasons, objectTypes, investorTypes);
+    }
+
+    // ---------- Konwersje między etapami cyklu ----------
+    private Cycle buildCycle(long leads, OfferAnalytics offers) {
+        Map<String, Long> byCode = new HashMap<>();
+        long total = 0;
+        for (StatusRow s : offers.getStatuses()) {
+            byCode.put(s.getCode(), s.getCount());
+            total += s.getCount();
+        }
+        long draft = byCode.getOrDefault("DRAFT", 0L);
+        long sent = total - draft;
+        long signed = byCode.getOrDefault("SIGNED", 0L);
+        long rejected = byCode.getOrDefault("REJECTED", 0L);
+        long accepted = byCode.getOrDefault("ACCEPTED", 0L) + signed;
+
+        return new Cycle(
+                leads, total, sent, accepted, signed, rejected,
+                round1(leads > 0 ? (total * 100.0) / leads : 0.0),
+                round1(total > 0 ? (sent * 100.0) / total : 0.0),
+                round1(sent > 0 ? (accepted * 100.0) / sent : 0.0),
+                round1(accepted > 0 ? (signed * 100.0) / accepted : 0.0),
+                offers.getWinRate(),
+                round1(leads > 0 ? (signed * 100.0) / leads : 0.0)
+        );
     }
 
     // ---------- Źródła ----------
@@ -191,11 +293,11 @@ public class SalesAnalyticsService {
             out.add(new RepRow(
                     userId,
                     name,
-                    mainSource.getOrDefault(userId, "—"),
+                    mainSource.getOrDefault(userId, "brak"),
                     leads,
                     value,
                     round1(conv),
-                    reason != null ? reason.getDescription() : "—"
+                    reason != null ? reason.getDescription() : "brak"
             ));
         }
         out.sort(Comparator.comparing(RepRow::getValue).reversed());
@@ -221,7 +323,7 @@ public class SalesAnalyticsService {
             ClientType ct = (ClientType) r[0];
             long cnt = lng(r[1]);
             BigDecimal avg = bd(r[2]).setScale(0, RoundingMode.HALF_UP);
-            out.add(new IndustryRow(ct != null ? ct.getDescription() : "—", avg, cnt));
+            out.add(new IndustryRow(ct != null ? ct.getDescription() : "brak", avg, cnt));
         }
         out.sort(Comparator.comparing(IndustryRow::getAvgLeadValue).reversed());
         return out;
@@ -263,7 +365,7 @@ public class SalesAnalyticsService {
             Map<RejectionReason, Long> byReason = e.getValue();
             List<Long> counts = topReasons.stream().map(rr -> byReason.getOrDefault(rr, 0L)).collect(Collectors.toList());
             long sum = byReason.values().stream().mapToLong(Long::longValue).sum();
-            rows.add(new HeatRow(e.getKey() != null ? e.getKey().getDescription() : "—", counts, sum));
+            rows.add(new HeatRow(e.getKey() != null ? e.getKey().getDescription() : "brak", counts, sum));
         }
         rows.sort(Comparator.comparingLong(HeatRow::getSum).reversed());
         return new Heatmap(reasonLabels(topReasons), rows);
@@ -286,7 +388,7 @@ public class SalesAnalyticsService {
             Map<RejectionReason, Long> byReason = e.getValue();
             List<Long> counts = topReasons.stream().map(rr -> byReason.getOrDefault(rr, 0L)).collect(Collectors.toList());
             long sum = byReason.values().stream().mapToLong(Long::longValue).sum();
-            rows.add(new HeatRow(names.getOrDefault(e.getKey(), "—"), counts, sum));
+            rows.add(new HeatRow(names.getOrDefault(e.getKey(), "brak"), counts, sum));
         }
         rows.sort(Comparator.comparingLong(HeatRow::getSum).reversed());
         if (rows.size() > MAX_REPS) rows = rows.subList(0, MAX_REPS);
@@ -360,7 +462,7 @@ public class SalesAnalyticsService {
     }
 
     private static String str(Object o) {
-        return o == null ? "—" : o.toString();
+        return o == null ? "brak" : o.toString();
     }
 
     private static double round1(double v) {

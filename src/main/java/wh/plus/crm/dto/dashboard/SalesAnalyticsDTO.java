@@ -9,7 +9,8 @@ import java.util.List;
 
 /**
  * Kompletny zestaw agregatów dla cockpitu sprzedaży (strona /reports/cockpit).
- * Jedno zapytanie zwraca wszystkie wymiary analizy lead → oferta → umowa.
+ * Analiza obejmuje pełny cykl: lead, oferta (statusy, powody odrzucenia, segmenty), umowa.
+ * Blok compare (opcjonalny) zawiera te same agregaty dla okresu porównawczego.
  */
 @Data
 @NoArgsConstructor
@@ -17,9 +18,11 @@ import java.util.List;
 public class SalesAnalyticsDTO {
 
     private Kpi kpi;
-    private Kpi kpiCompare;              // opcjonalnie: ten sam zestaw KPI dla okresu porównawczego (null jeśli brak)
+    private Kpi kpiCompare;              // KPI okresu porównawczego (null jeśli brak porównania)
     private Timing timing;
     private Funnel funnel;
+    private Cycle cycle;                 // konwersje między etapami całego cyklu
+    private OfferAnalytics offers;       // analityka ofert: statusy, win-rate, powody odrzucenia, segmenty
     private List<SourceRow> sources;
     private List<RepRow> reps;
     private Clients clients;
@@ -27,6 +30,7 @@ public class SalesAnalyticsDTO {
     private List<TrendPoint> trend;
     private Heatmap reasonByIndustry;
     private Heatmap reasonByRep;
+    private ComparePayload compare;      // pełne agregaty okresu porównawczego (null jeśli brak porównania)
 
     @Data @NoArgsConstructor @AllArgsConstructor
     public static class Kpi {
@@ -48,8 +52,63 @@ public class SalesAnalyticsDTO {
     public static class Funnel {
         private long leads;
         private long offers;
+        private Long sent;                  // oferty wysłane (status inny niż DRAFT); null gdy nieliczone (drill-down handlowca)
         private long accepted;              // oferty ACCEPTED lub SIGNED
-        private long signed;               // oferty SIGNED z datą podpisu w okresie
+        private long signed;                // oferty SIGNED z datą podpisu w okresie
+    }
+
+    /** Konwersje między etapami całego cyklu sprzedaży (kohorta: leady i oferty utworzone w okresie). */
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class Cycle {
+        private long leads;
+        private long offers;                 // wszystkie oferty utworzone w okresie
+        private long offersSent;             // oferty, które wyszły poza szkic (SENT, ACCEPTED, REJECTED, SIGNED)
+        private long offersAccepted;         // ACCEPTED lub SIGNED
+        private long offersSigned;           // SIGNED (wg statusu kohorty)
+        private long offersRejected;         // REJECTED
+        private double leadToOfferRate;      // oferty / leady * 100
+        private double offerToSentRate;      // wysłane / oferty * 100
+        private double sentToAcceptedRate;   // zaakceptowane / wysłane * 100
+        private double acceptedToSignedRate; // podpisane / zaakceptowane * 100
+        private double winRate;              // SIGNED / (SIGNED + REJECTED) * 100
+        private double overallRate;          // podpisane / leady * 100
+    }
+
+    /** Analityka ofert: rozkład statusów, win-rate, powody odrzucenia ofert, segmentacja. */
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class OfferAnalytics {
+        private List<StatusRow> statuses;        // rozkład wg statusu (pełna lista, także zerowe)
+        private double winRate;                  // SIGNED / (SIGNED + REJECTED) * 100
+        private long decided;                    // SIGNED + REJECTED (oferty rozstrzygnięte)
+        private BigDecimal totalValue;           // suma wartości wszystkich ofert z okresu
+        private BigDecimal avgOfferValue;        // średnia wartość oferty
+        private List<ReasonRow> rejectionReasons;// powody odrzucenia OFERT (Offer.rejectionReason)
+        private List<CategoryRow> objectTypes;   // segmentacja wg typu obiektu
+        private List<CategoryRow> investorTypes; // segmentacja wg typu inwestora
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class StatusRow {
+        private String code;               // kod enuma (DRAFT, SENT, ...)
+        private String name;               // opis PL
+        private long count;
+        private BigDecimal value;          // suma totalPrice
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class ReasonRow {
+        private String name;               // opis PL powodu
+        private long count;
+        private BigDecimal value;          // suma wartości utraconych ofert
+    }
+
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class CategoryRow {
+        private String name;               // opis PL (objectType / investorType)
+        private long count;
+        private BigDecimal value;          // suma wartości ofert
+        private long signed;               // liczba podpisanych w segmencie
+        private BigDecimal signedValue;    // wartość podpisanych w segmencie
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor
@@ -104,5 +163,17 @@ public class SalesAnalyticsDTO {
         private String name;
         private List<Long> counts;         // liczności w kolejności `reasons`
         private long sum;                  // łączna liczba odrzuceń w wierszu (wszystkie powody)
+    }
+
+    /** Pełne agregaty okresu porównawczego, do zestawień A vs B na froncie. */
+    @Data @NoArgsConstructor @AllArgsConstructor
+    public static class ComparePayload {
+        private Kpi kpi;
+        private Timing timing;
+        private Funnel funnel;
+        private Cycle cycle;
+        private OfferAnalytics offers;
+        private List<SourceRow> sources;
+        private Clients clients;
     }
 }

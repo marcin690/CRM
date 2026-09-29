@@ -91,6 +91,36 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
     Double analyticsAvgOfferToSignDays(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
+    /** offerStatus, liczba, suma wartości (kohorta: oferty utworzone w okresie) */
+    @Query("SELECT o.offerStatus, COUNT(o), COALESCE(SUM(o.totalPrice), 0) FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until AND (:teamId IS NULL OR st.id = :teamId) " +
+            "GROUP BY o.offerStatus")
+    List<Object[]> analyticsOffersByStatus(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
+    /** rejectionReason OFERTY, liczba, suma wartości utraconych ofert */
+    @Query("SELECT o.rejectionReason, COUNT(o), COALESCE(SUM(o.totalPrice), 0) FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until AND o.rejectionReason IS NOT NULL AND (:teamId IS NULL OR st.id = :teamId) " +
+            "GROUP BY o.rejectionReason")
+    List<Object[]> analyticsOfferRejectionReasons(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
+    /** objectType, liczba, suma wartości, liczba podpisanych, wartość podpisanych */
+    @Query("SELECT o.objectType, COUNT(o), COALESCE(SUM(o.totalPrice), 0), " +
+            "SUM(CASE WHEN o.offerStatus = 'SIGNED' THEN 1 ELSE 0 END), " +
+            "COALESCE(SUM(CASE WHEN o.offerStatus = 'SIGNED' THEN o.totalPrice ELSE 0 END), 0) " +
+            "FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until AND o.objectType IS NOT NULL AND (:teamId IS NULL OR st.id = :teamId) " +
+            "GROUP BY o.objectType")
+    List<Object[]> analyticsOffersByObjectType(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
+    /** investorType, liczba, suma wartości, liczba podpisanych, wartość podpisanych */
+    @Query("SELECT o.investorType, COUNT(o), COALESCE(SUM(o.totalPrice), 0), " +
+            "SUM(CASE WHEN o.offerStatus = 'SIGNED' THEN 1 ELSE 0 END), " +
+            "COALESCE(SUM(CASE WHEN o.offerStatus = 'SIGNED' THEN o.totalPrice ELSE 0 END), 0) " +
+            "FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.creationDate >= :since AND o.creationDate <= :until AND o.investorType IS NOT NULL AND (:teamId IS NULL OR st.id = :teamId) " +
+            "GROUP BY o.investorType")
+    List<Object[]> analyticsOffersByInvestorType(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
     /** rok, miesiac, liczba podpisanych umów (wg daty podpisu) */
     @Query("SELECT YEAR(o.signedContractDate), MONTH(o.signedContractDate), COUNT(o) FROM Offer o LEFT JOIN o.salesTeam st " +
             "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND (:teamId IS NULL OR st.id = :teamId) " +
