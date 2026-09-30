@@ -20,4 +20,5 @@ public class UserDTO {
     private String teamName;
     private Boolean isSalesRepresentative;
     private Set<String> permissions;    // np. ["REPORTS"]
+    private Boolean blocked;            // true = zablokowane logowanie
 }

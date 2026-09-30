@@ -44,6 +44,7 @@ public class UserService implements UserDetailsService {
         dto.setTeamName(u.getTeam() != null ? u.getTeam().getName() : null);
         dto.setIsSalesRepresentative(u.isSalesRepresentative());
         dto.setPermissions(u.getPermissions() == null ? new HashSet<>() : new HashSet<>(u.getPermissions()));
+        dto.setBlocked(Boolean.TRUE.equals(u.getBlocked()));
         return dto;
     }
 
@@ -125,6 +126,9 @@ public class UserService implements UserDetailsService {
         }
         if (dto.getIsSalesRepresentative() != null) {
             u.setSalesRepresentative(dto.getIsSalesRepresentative());
+        }
+        if (dto.getBlocked() != null) {
+            u.setBlocked(dto.getBlocked());
         }
 
         userRepository.save(u);

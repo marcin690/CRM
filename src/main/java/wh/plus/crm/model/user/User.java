@@ -43,6 +43,13 @@ public class User implements UserDetails {
     private Long phone;
     private boolean isSalesRepresentative;
 
+    /**
+     * Blokada logowania. Nullable: null/false = aktywny, true = zablokowany.
+     * Nullable, aby istniejące konta (kolumna null po migracji) pozostały aktywne.
+     */
+    @Column(name = "blocked")
+    private Boolean blocked;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -76,7 +83,8 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // Konto aktywne, dopóki nie zablokowane. Spring Security odrzuci logowanie gdy false.
+        return !Boolean.TRUE.equals(blocked);
     }
 
     @ManyToOne(fetch = FetchType.LAZY)

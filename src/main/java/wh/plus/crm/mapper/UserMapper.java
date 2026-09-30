@@ -16,6 +16,7 @@ public interface UserMapper {
     @Mapping(target = "permissions", ignore = true)
     @Mapping(target = "isSalesRepresentative", ignore = true)
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "blocked", ignore = true)
     UserDTO userToUserDTO(User user);
 
     @Mapping(target = "roles", ignore = true)

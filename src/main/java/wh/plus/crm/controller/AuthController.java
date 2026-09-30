@@ -106,6 +106,8 @@ public class AuthController {
             User user = (User) authentication.getPrincipal();
             String jwt = jwtUtil.generateToken(user);
             return ResponseEntity.ok(new AuthenticationResponse(jwt));
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            return ResponseEntity.status(403).body("Konto zostało zablokowane. Skontaktuj się z administratorem.");
         } catch (AuthenticationException e) {
             logger.error("Authentication failed: {}", authenticationRequest);
             return ResponseEntity.status(401).body("Authentication failed.");

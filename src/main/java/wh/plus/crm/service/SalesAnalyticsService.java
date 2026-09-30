@@ -145,11 +145,15 @@ public class SalesAnalyticsService {
         Object[] leadT = first(leadRepository.analyticsLeadTotals(since, until, teamId), new Object[]{0L, BigDecimal.ZERO});
         Object[] offerT = first(offerRepository.analyticsOfferTotals(since, until, teamId), new Object[]{0L, 0L, 0L, BigDecimal.ZERO});
 
+        // Umowy podpisane liczymy wg DATY PODPISU (signedContractDate), niezależnie od daty utworzenia oferty,
+        // aby umowa podpisana w innym miesiącu niż powstała oferta trafiła w poprawny miesiąc statystyk.
+        Object[] signedT = first(offerRepository.analyticsSignedTotals(since, until, teamId), new Object[]{0L, BigDecimal.ZERO});
+
         long leads = lng(leadT[0]);
         BigDecimal pipeline = bd(leadT[1]);
         long offers = lng(offerT[0]);
-        long signed = lng(offerT[2]);
-        BigDecimal signedValue = bd(offerT[3]);
+        long signed = lng(signedT[0]);
+        BigDecimal signedValue = bd(signedT[1]);
 
         double conversion = leads > 0 ? (signed * 100.0) / leads : 0.0;
         BigDecimal avgContract = signed > 0
@@ -173,7 +177,9 @@ public class SalesAnalyticsService {
     private Funnel buildFunnel(LocalDateTime since, LocalDateTime until, Long teamId) {
         Object[] leadT = first(leadRepository.analyticsLeadTotals(since, until, teamId), new Object[]{0L, BigDecimal.ZERO});
         Object[] offerT = first(offerRepository.analyticsOfferTotals(since, until, teamId), new Object[]{0L, 0L, 0L, BigDecimal.ZERO});
-        return new Funnel(lng(leadT[0]), lng(offerT[0]), null, lng(offerT[1]), lng(offerT[2]));
+        // signed wg daty podpisu (spójnie z KPI)
+        long signed = lng(first(offerRepository.analyticsSignedTotals(since, until, teamId), new Object[]{0L, BigDecimal.ZERO})[0]);
+        return new Funnel(lng(leadT[0]), lng(offerT[0]), null, lng(offerT[1]), signed);
     }
 
     // ---------- Analityka ofert: statusy, win-rate, powody odrzucenia, segmenty ----------

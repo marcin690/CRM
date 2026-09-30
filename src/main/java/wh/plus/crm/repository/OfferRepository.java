@@ -61,6 +61,12 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "FROM Offer o LEFT JOIN o.salesTeam st WHERE o.creationDate >= :since AND o.creationDate <= :until AND (:teamId IS NULL OR st.id = :teamId)")
     List<Object[]> analyticsOfferTotals(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
 
+    /** [0]=liczba umów podpisanych W OKRESIE (wg daty podpisu, niezależnie od daty utworzenia oferty), [1]=suma ich wartości */
+    @Query("SELECT COUNT(o), COALESCE(SUM(o.totalPrice), 0) FROM Offer o LEFT JOIN o.salesTeam st " +
+            "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until " +
+            "AND (:teamId IS NULL OR st.id = :teamId)")
+    List<Object[]> analyticsSignedTotals(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until, @Param("teamId") Long teamId);
+
     /** nazwa źródła leada, liczba podpisanych umów */
     @Query("SELECT o.lead.leadSource.name, COUNT(o) FROM Offer o LEFT JOIN o.salesTeam st " +
             "WHERE o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until AND o.lead IS NOT NULL " +

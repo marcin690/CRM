@@ -59,7 +59,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = this.userService.loadUserByUsername(username);
-                if (jwtUtil.validateToken(jwtToken, userDetails)) {
+                if (!userDetails.isEnabled()) {
+                    // Konto zablokowane — odrzuć nawet z ważnym tokenem.
+                    log.warn("Odrzucono zablokowanego użytkownika '{}' ({} {})", username, request.getMethod(), request.getRequestURI());
+                    request.setAttribute(JWT_ERROR_ATTRIBUTE, "blocked");
+                } else if (jwtUtil.validateToken(jwtToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
