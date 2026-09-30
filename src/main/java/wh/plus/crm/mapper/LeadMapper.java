@@ -37,14 +37,14 @@
         @AfterMapping
         default void mapLeadStatus(LeadDTO leadDTO, @MappingTarget Lead lead, @Context LeadStatusRepository leadStatusRepository ){
             if(leadDTO.getLeadStatusId() != null){
-                lead.setLeadStatus(leadStatusRepository.findById(leadDTO.getLeadStatusId()).orElseThrow(() -> new NoSuchElementException("Lead Ststus not found")));
+                lead.setLeadStatus(leadStatusRepository.findById(leadDTO.getLeadStatusId()).orElseThrow(() -> new NoSuchElementException("Wybrany status leada nie istnieje")));
             }
         }
 
         @AfterMapping
         default void mapLeadSource(LeadDTO leadDTO, @MappingTarget Lead lead, @Context LeadSourceRepository leadSourceRepository){
             if(leadDTO.getLeadSourceId() != null){
-                lead.setLeadSource(leadSourceRepository.findById(leadDTO.getLeadSourceId()).orElseThrow(() -> new NoSuchElementException("Lead Source not found")));
+                lead.setLeadSource(leadSourceRepository.findById(leadDTO.getLeadSourceId()).orElseThrow(() -> new NoSuchElementException("Wybrane źródło leada nie istnieje")));
             }
         }
     }
