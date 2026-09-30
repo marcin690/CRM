@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties({
          "roles", "authorities", "phone", "permissions",
         "enabled", "salesRepresentative", "accountNonExpired",
-        "accountNonLocked", "credentialsNonExpired"
+        "accountNonLocked", "credentialsNonExpired",
+        "hibernateLazyInitializer", "handler"
 })
 public class User implements UserDetails {
 
