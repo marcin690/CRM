@@ -130,6 +130,10 @@ public class UserService implements UserDetailsService {
         if (dto.getBlocked() != null) {
             u.setBlocked(dto.getBlocked());
         }
+        // Admin może ustawić nowe hasło; puste = bez zmiany.
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            u.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
 
         userRepository.save(u);
         return toDto(u);

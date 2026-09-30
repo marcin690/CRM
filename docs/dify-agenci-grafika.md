@@ -47,3 +47,34 @@ Uzupełnienie do `dify-agenci-asystent-wytyczne.md`. Dotyczy sytuacji: użytkown
 - [ ] Ustalony limit/koszt generacji
 
 _Uwaga: zmiany po stronie Dify (aplikacje agentów), nie w kodzie CRM — poza opcjonalnym stylem obrazu w `ai-chat.css`._
+
+---
+
+## Naprawa „Czat Gemini" — jak zmusić go do GENEROWANIA grafik (krok po kroku)
+
+Stan wyjściowy (z pliku `Czat Gemini.yml`): chatflow `advanced-chat` — Start → wybór `poziom` → router if-else → 3 węzły LLM (Gemini 2.5 Flash-Lite / 3 Flash / 3.1 Pro) → Answer. Wszystkie LLM mają `vision.enabled: true` (PRZYJMUJĄ obrazy = analiza), ale to modele tekstowe → **nie tworzą** grafik. Trzeba dodać węzeł generujący + routing.
+
+### Krok 1 — źródło grafiki (wybierz jedno)
+- **A. Gemini natywnie (najbliżej tego czatu):** w Dify → edycja aplikacji „Czat Gemini" → dodaj węzeł LLM i w wyborze modelu pluginu `langgenius/gemini` poszukaj modelu obrazowego (np. „Gemini 2.5 Flash Image" / „Nano Banana" / Imagen). Jeśli plugin go udostępnia — użyj go w nowym węźle. Jeśli nie ma na liście → droga B.
+- **B. Dedykowane narzędzie:** Dify → **Marketplace → Tools** → zainstaluj generator obrazów (DALL·E 3 / Stability / Google Imagen / ComfyUI) → wpnij **klucz API** dostawcy.
+
+### Krok 2 — routing (kiedy generować)
+- Prosto: w węźle **Start** do zmiennej `poziom` dodaj opcję **„Grafika"**; w węźle **Poziom modelu** (if-else) dodaj gałąź `poziom == Grafika` prowadzącą do węzła generującego (zamiast do LLM).
+- Ambitniej: zamień na węzeł **Agent** z podpiętym narzędziem image-gen — sam wykryje „narysuj/wygeneruj" i użyje narzędzia; przy zwykłym pytaniu odpowie tekstem.
+
+### Krok 3 — węzeł generujący
+- Wejście: prompt użytkownika `{{#sys.query#}}` (ew. wzbogacony instrukcją stylu wnętrz hotelowych).
+- Wyjście (URL/obraz) → do węzła **Answer**.
+
+### Krok 4 — format odpowiedzi (WAŻNE)
+Answer musi zwrócić obraz jako markdown: `![opis](URL)`. Front CRM (react-markdown) wyświetli go bez zmian w kodzie. Zalecany CSS: `.ai-md img{max-width:100%;height:auto;border-radius:8px}`.
+
+### Checklista
+- [ ] Model/narzędzie obrazowe dostępne (Gemini image albo tool z Marketplace) + klucz
+- [ ] Nowa gałąź „Grafika" w routerze LUB węzeł Agent z narzędziem
+- [ ] Węzeł generujący bierze `{{#sys.query#}}` i zwraca URL
+- [ ] Answer wypisuje `![](URL)`
+- [ ] Prompt: gdy nie da się wygenerować → sensowna alternatywa zamiast „nie potrafię"
+- [ ] Test: „wygeneruj wizualizację pokoju hotelowego w ciepłych barwach" → wraca obraz
+
+_Wszystko po stronie Dify (edytor chatflow + narzędzie + klucz). CRM już renderuje obrazy z markdown._
