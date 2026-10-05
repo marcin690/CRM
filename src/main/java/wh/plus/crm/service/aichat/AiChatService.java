@@ -46,6 +46,8 @@ public class AiChatService {
 
     /** Właściciele wgranych plików: difyFileId -> (userId, expiryEpochMs). TTL 1h. */
     private final Map<String, long[]> fileOwners = new ConcurrentHashMap<>();
+    /** Typ pliku dla Dify (image/document) per difyFileId — do zbudowania FileRef przy wysyłce. */
+    private final Map<String, String> fileDifyType = new ConcurrentHashMap<>();
     /** Aktywny streaming per użytkownik (max 1). */
     private final Set<Long> activeStreams = ConcurrentHashMap.newKeySet();
     /** Sliding-window rate limit per użytkownik. */
@@ -252,12 +254,21 @@ public class AiChatService {
         if (app == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieznany czat");
         if (bytes == null || bytes.length == 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pusty plik");
         if (bytes.length > MAX_FILE_BYTES) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plik za duży (max 10 MB)");
-        String sniffed = sniffImageType(bytes);
-        if (sniffed == null || (contentType != null && !ALLOWED_IMAGE_TYPES.contains(contentType) && !ALLOWED_IMAGE_TYPES.contains(sniffed))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dozwolone są tylko obrazy PNG, JPG, WEBP, GIF");
+        // Typ rozpoznajemy po magic bytes (nie po rozszerzeniu). Obraz -> Dify type "image", PDF -> "document".
+        String sniffedImg = sniffImageType(bytes);
+        String mime, difyType;
+        if (sniffedImg != null) {
+            mime = sniffedImg;
+            difyType = "image";
+        } else if (isPdf(bytes) || "application/pdf".equalsIgnoreCase(contentType)) {
+            mime = "application/pdf";
+            difyType = "document";
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dozwolone są obrazy (PNG, JPG, WEBP, GIF) lub PDF");
         }
-        String id = difyClient.uploadFile(app.getAgentCode(), bytes, filename, sniffed, difyUser(userId));
+        String id = difyClient.uploadFile(app.getAgentCode(), bytes, filename, mime, difyUser(userId));
         fileOwners.put(id, new long[]{ userId, System.currentTimeMillis() + 3_600_000 });
+        fileDifyType.put(id, difyType);
         return new FileUploadedDto(id);
     }
 
@@ -271,7 +282,7 @@ public class AiChatService {
             if (owner == null || owner[0] != userId || owner[1] < now) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieprawidłowy plik");
             }
-            refs.add(new FileRef("image", id));
+            refs.add(new FileRef(fileDifyType.getOrDefault(id, "image"), id));
         }
         return refs;
     }
@@ -284,6 +295,11 @@ public class AiChatService {
         if (b.length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
                 && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return "image/webp";
         return null;
+    }
+
+    /** Rozpoznanie PDF po magic bytes "%PDF-". */
+    private boolean isPdf(byte[] b) {
+        return b.length >= 5 && b[0] == '%' && b[1] == 'P' && b[2] == 'D' && b[3] == 'F' && b[4] == '-';
     }
 
     // ===== Feedback =====
