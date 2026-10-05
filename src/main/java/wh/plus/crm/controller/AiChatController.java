@@ -134,7 +134,7 @@ public class AiChatController {
             executor.execute(() -> {
             try {
                 streamer.stream(conv.getApp().getAgentCode(), query, files, conv.getDifyConversationId(), difyUser,
-                        conv.getPoziom(),
+                        conv.getApp().usesPoziom() ? conv.getPoziom() : null,
                         new DifyChatStreamer.Handler() {
                             @Override
                             public void onStart(String difyConversationId, String taskId) {

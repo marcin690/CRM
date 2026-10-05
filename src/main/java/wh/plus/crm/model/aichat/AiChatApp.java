@@ -16,7 +16,10 @@ public enum AiChatApp {
             "gpt-5.4"),
     GEMINI("asystent-gemini", "Gemini",
             "Mocny w danych, researchu i pracy z obrazami. Dobry do zestawień i analiz multimodalnych.",
-            "gemini-3-flash-preview");
+            "gemini-3-flash-preview"),
+    GENERATOR_GRAFIKI("asystent-generator-grafiki", "Generator grafiki",
+            "Generuje i edytuje obrazy (wizualizacje wnętrz, aranżacje). Opisz, co ma powstać, lub wgraj zdjęcie do przeróbki.",
+            "gemini-3-pro-image-preview");
 
     private final String agentCode;
     private final String label;
@@ -47,6 +50,11 @@ public enum AiChatApp {
     /** Dozwolone poziomy (etykiety zgodne z tym, co przyjmuje zmienna 'poziom' w Dify). */
     public static final java.util.List<String> POZIOMY = java.util.List.of("Szybki", "Standard", "Zaawansowany");
 
+    /** Czy czat używa zmiennej 'poziom' (wybór modelu). Generator grafiki ma jeden model — nie używa. */
+    public boolean usesPoziom() {
+        return this != GENERATOR_GRAFIKI;
+    }
+
     /** Normalizuje poziom z requestu do jednej z dozwolonych etykiet (domyślnie Standard). */
     public static String normPoziom(String p) {
         if (p != null) {
@@ -74,6 +82,7 @@ public enum AiChatApp {
                 case "Zaawansowany" -> "gemini-3.1-pro-preview";
                 default -> "gemini-3-flash-preview";
             };
+            case GENERATOR_GRAFIKI -> "gemini-3-pro-image-preview"; // jeden model (Nano Banana Pro), bez poziomów
         };
     }
 }
