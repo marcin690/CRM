@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -29,9 +31,11 @@ public class AiConversation {
     @Column(name = "owner_user_id", nullable = false)
     private Long ownerUserId;
 
-    /** Który czat (CLAUDE/CHATGPT/GEMINI). */
+    /** Który czat (CLAUDE/CHATGPT/GEMINI/GENERATOR_GRAFIKI). VARCHAR (nie natywny ENUM MySQL),
+     *  by dodanie nowego kanału nie wymagało zmiany w DB. */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 32)
     private AiChatApp app;
 
     /** Poziom modelu: Szybki / Standard / Zaawansowany (blokowany po 1. wiadomości). */

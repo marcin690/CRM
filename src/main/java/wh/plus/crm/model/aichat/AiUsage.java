@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,7 +36,8 @@ public class AiUsage {
     private Long conversationId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 32)
     private AiChatApp app;
 
     @Column(length = 64)
