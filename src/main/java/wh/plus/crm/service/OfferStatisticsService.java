@@ -68,4 +68,16 @@ public class OfferStatisticsService {
         return new OfferStatisticsDTO(totalOffers, convertedOffers, conversionRate,
                 totalValue, convertedValue, averageOfferValue, teamStats);
     }
+
+    /** Lista ofert składających się na konwersję danego zespołu w okresie (do rozwijanego wiersza). */
+    public List<wh.plus.crm.dto.offer.ConvertedOfferDTO> getConvertedOffers(Long teamId, LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom == null || dateTo == null) {
+            LocalDate today = LocalDate.now();
+            dateFrom = today.minusMonths(1).withDayOfMonth(1);
+            dateTo = today.minusMonths(1).withDayOfMonth(today.minusMonths(1).lengthOfMonth());
+        }
+        LocalDateTime since = dateFrom.atStartOfDay();
+        LocalDateTime until = dateTo.atTime(23, 59, 59);
+        return offerRepository.getConvertedOffersByTeam(teamId, since, until);
+    }
 }

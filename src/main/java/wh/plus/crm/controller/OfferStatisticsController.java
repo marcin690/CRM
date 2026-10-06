@@ -27,4 +27,14 @@ public class OfferStatisticsController {
         OfferStatisticsDTO statistics = offerStatisticsService.getOfferStatistics(dateFrom, dateTo);
         return ResponseEntity.ok(statistics);
     }
+
+    /** Oferty wchodzące w skład konwersji danego zespołu w okresie (rozwijany wiersz w statystykach wg zespołów). */
+    @GetMapping("/converted")
+    public ResponseEntity<java.util.List<wh.plus.crm.dto.offer.ConvertedOfferDTO>> getConvertedOffers(
+            @RequestParam Long teamId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo
+    ) {
+        return ResponseEntity.ok(offerStatisticsService.getConvertedOffers(teamId, dateFrom, dateTo));
+    }
 }

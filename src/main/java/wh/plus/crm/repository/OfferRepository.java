@@ -40,6 +40,19 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
             "GROUP BY o.salesTeam.id, o.salesTeam.name")
     List<Object[]> getStatisticsByTeam(@Param("since") LocalDateTime since, @Param("until") LocalDateTime until);
 
+    /** Lista ofert wchodzących w skład konwersji zespołu (dokładnie te, które liczy getStatisticsByTeam jako skonwertowane). */
+    @Query("SELECT new wh.plus.crm.dto.offer.ConvertedOfferDTO(" +
+            "o.id, o.name, COALESCE(c.clientBusinessName, c.clientFullName), u.fullname, o.totalPrice, o.signedContractDate) " +
+            "FROM Offer o LEFT JOIN o.client c LEFT JOIN o.user u " +
+            "WHERE o.salesTeam.id = :teamId " +
+            "AND o.creationDate >= :since AND o.creationDate <= :until " +
+            "AND o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until " +
+            "ORDER BY o.signedContractDate DESC")
+    List<wh.plus.crm.dto.offer.ConvertedOfferDTO> getConvertedOffersByTeam(
+            @Param("teamId") Long teamId,
+            @Param("since") LocalDateTime since,
+            @Param("until") LocalDateTime until);
+
     @Query("SELECT COUNT(o), " +
             "SUM(CASE WHEN o.offerStatus = 'SIGNED' AND o.signedContractDate >= :since AND o.signedContractDate <= :until THEN 1 ELSE 0 END), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
