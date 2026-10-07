@@ -40,11 +40,14 @@ public class SalesAnalyticsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate compareTo,
+            @RequestParam(required = false) Long teamId
     ) {
         currentUserService.requireReports();
-        Long teamId = currentUserService.scopeTeamId(); // null dla ADMIN
-        return ResponseEntity.ok(salesAnalyticsService.getAnalytics(dateFrom, dateTo, compareFrom, compareTo, teamId));
+        // Admin: może wybrać całość (teamId=null) lub konkretny zespół (teamId=X).
+        // Pozostali: zawsze wymuszony własny zespół, parametr klienta ignorowany.
+        Long effectiveTeam = currentUserService.isAdmin() ? teamId : currentUserService.scopeTeamId();
+        return ResponseEntity.ok(salesAnalyticsService.getAnalytics(dateFrom, dateTo, compareFrom, compareTo, effectiveTeam));
     }
 
     /** Wnioski AI (Claude) dla tego samego okresu. refresh=true wymusza przeliczenie (pomija cache). */
