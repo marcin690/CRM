@@ -61,6 +61,9 @@ public class DifyLeadsClient {
         inputs.put("tryb", tryb);
         inputs.put("dni_newsy", dniNewsy);
         inputs.put("dni_przetargi", dniPrzetargi);
+        // Workflow v5 ma też okna dla Zwiadowcy i Kompasu — nieeksponowane w UI, dajemy sensowny default.
+        inputs.put("dni_zwiadowca", dniNewsy);
+        inputs.put("dni_kompas", dniNewsy);
 
         Map<String, Object> body = new HashMap<>();
         body.put("inputs", inputs);
@@ -86,22 +89,28 @@ public class DifyLeadsClient {
         }
 
         JsonNode outputs = data.path("outputs");
+
+        // Preferuj ustrukturyzowane 'leady_json', jeśli workflow je wystawia.
         JsonNode leadyJsonNode = outputs.path("leady_json");
-        if (leadyJsonNode.isMissingNode() || leadyJsonNode.isNull()) {
-            log.warn("Dify workflow nie zwrócił pola 'leady_json' — dodaj je w node End. "
-                    + "Dostępne wyjścia: {}", fieldNames(outputs));
-            return List.of();
+        if (!leadyJsonNode.isMissingNode() && !leadyJsonNode.isNull()) {
+            JsonNode array = parseArray(leadyJsonNode);
+            if (array != null && array.isArray()) {
+                List<JsonNode> result = new ArrayList<>();
+                array.forEach(result::add);
+                return result;
+            }
         }
 
-        JsonNode array = parseArray(leadyJsonNode);
-        if (array == null || !array.isArray()) {
-            log.warn("Pole 'leady_json' nie jest tablicą JSON: {}", leadyJsonNode.getNodeType());
+        // Fallback: parsuj Markdown z pola 'raport' (to oddaje wdrożony workflow v5).
+        JsonNode raportNode = outputs.path("raport");
+        if (raportNode.isMissingNode() || raportNode.isNull()) {
+            log.warn("Dify workflow nie zwrócił ani 'leady_json', ani 'raport'. Dostępne wyjścia: {}",
+                    fieldNames(outputs));
             return List.of();
         }
-
-        List<JsonNode> result = new ArrayList<>();
-        array.forEach(result::add);
-        return result;
+        List<JsonNode> parsed = RaportParser.parse(raportNode.asText(""), mapper);
+        log.info("Sparsowano {} obiektów z raportu Dify", parsed.size());
+        return parsed;
     }
 
     /** {@code leady_json} to zwykle String (json.dumps); dopuszczamy też gotową tablicę. */
