@@ -1,0 +1,86 @@
+# Lokalny stack dev CRM (Docker). Porty niestandardowe — brak kolizji z innymi projektami.
+#
+#   docker compose up -d                  → sama INFRA (MySQL + MinIO).
+#                                           Backend i frontend uruchamiasz z IntelliJ
+#                                           (profil dev łączy się z MySQL na :13306, MinIO na :19900).
+#   docker compose --profile app up -d --build
+#                                         → WSZYSTKO w Dockerze (infra + backend + frontend).
+#
+# Baza startuje pusta — schemat tworzy Hibernate (ddl-auto=update w profilu dev).
+name: crm
+
+services:
+  # ---------- INFRA (zawsze) ----------
+  crm-mysql:
+    image: mysql:8.0
+    container_name: crm-mysql
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"   # root bez hasła — zgodnie z profilem dev
+      MYSQL_DATABASE: crm_dev
+    ports:
+      - "13306:3306"
+    volumes:
+      - crm-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  crm-minio:
+    # MinIO nie publikuje taga `latest` — konkretny RELEASE (ten sam, którego już używasz lokalnie).
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: crm-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "19900:9000"   # S3 API
+      - "19901:9001"   # konsola webowa
+    volumes:
+      - crm-minio-data:/data
+
+  # ---------- APLIKACJA (profil `app`) ----------
+  crm-backend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crm-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: "8080"
+      DB_HOST: crm-mysql
+      DB_PORT: "3306"
+      # MinIO: endpoint wewnętrzny (sieć kontenerów), public-url widoczny z przeglądarki
+      MINIO_ENDPOINT: http://crm-minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: crm-uploads
+      MINIO_PUBLIC_URL: http://localhost:19900
+    ports:
+      - "18080:8080"
+    depends_on:
+      crm-mysql:
+        condition: service_healthy
+      crm-minio:
+        condition: service_started
+
+  crm-frontend:
+    profiles: ["app"]
+    build:
+      context: ../crm-frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:18080
+    container_name: crm-frontend
+    ports:
+      - "18088:3000"
+    depends_on:
+      - crm-backend
+
+volumes:
+  crm-mysql-data:
+  crm-minio-data:
