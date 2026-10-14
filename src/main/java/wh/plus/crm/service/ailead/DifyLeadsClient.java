@@ -75,14 +75,27 @@ public class DifyLeadsClient {
                 new HttpEntity<>(body, headers),
                 JsonNode.class);
 
-        JsonNode root = resp.getBody();
+        return handleRunResponse(resp.getBody());
+    }
+
+    /**
+     * Przetwarza odpowiedź {@code /workflows/run}: sprawdza status, po czym czyta
+     * {@code outputs.leady_json} (preferowane) lub parsuje Markdown {@code outputs.raport}.
+     *
+     * <p>Status {@code partial-succeeded} (część węzłów padła, ale workflow dobiegł końca
+     * i wystawił raport) traktujemy jak sukces — parsujemy to, co dostępne. Twarde statusy
+     * ({@code failed}, {@code stopped}) wywołują wyjątek.
+     */
+    List<JsonNode> handleRunResponse(JsonNode root) {
         if (root == null) {
             throw new IllegalStateException("Pusta odpowiedź z Dify (workflows/run)");
         }
 
         JsonNode data = root.path("data");
         String status = data.path("status").asText("");
-        if (!status.isEmpty() && !"succeeded".equals(status)) {
+        // 'partial-succeeded' = część węzłów padła (np. Zwiadowca/Kompas), ale workflow
+        // dobiegł końca i wystawił raport — parsujemy to, co jest, zamiast odrzucać cały przebieg.
+        if (!status.isEmpty() && !"succeeded".equals(status) && !"partial-succeeded".equals(status)) {
             String err = data.path("error").asText("");
             throw new IllegalStateException("Workflow Dify nie powiódł się (status=" + status
                     + (err.isEmpty() ? "" : ", error=" + err) + ")");
