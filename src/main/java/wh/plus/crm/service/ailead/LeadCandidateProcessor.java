@@ -14,6 +14,7 @@ import wh.plus.crm.repository.LeadCandidateRepository;
 import wh.plus.crm.repository.LeadCandidateRunRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +40,8 @@ public class LeadCandidateProcessor {
     private final LeadCandidateRepository candidateRepository;
     private final DifyLeadsClient difyLeadsClient;
     private final DifyProperties difyProperties;
+    private final ZwiadowcaClient zwiadowcaClient;
+    private final KompasClient kompasClient;
 
     @Async("valuationExecutor")
     public void process(Long runId) {
@@ -48,9 +51,22 @@ public class LeadCandidateProcessor {
             return;
         }
         try {
-            String user = difyProperties.getUserPrefix() + ":system";
-            List<JsonNode> leads = difyLeadsClient.fetchLeads(
-                    run.getTryb(), run.getDniNewsy(), run.getDniPrzetargi(), user);
+            String tryb = run.getTryb();
+            List<JsonNode> leads = new ArrayList<>();
+
+            // Dify = BZP/TED/Tavily (newsy). Pomijamy tylko dla trybów wyłącznie Zwiadowca/Kompas.
+            if (wantsDify(tryb)) {
+                try {
+                    String user = difyProperties.getUserPrefix() + ":system";
+                    leads.addAll(difyLeadsClient.fetchLeads(
+                            tryb, run.getDniNewsy(), run.getDniPrzetargi(), user));
+                } catch (Exception e) {
+                    log.warn("Dify nieudane (kontynuuję z pozostałymi źródłami): {}", e.getMessage());
+                }
+            }
+            // Zwiadowca i Kompas — bezpośrednio z ich API (każde łapie własne błędy).
+            if (wantsZwiadowca(tryb)) leads.addAll(zwiadowcaClient.fetchCandidates());
+            if (wantsKompas(tryb)) leads.addAll(kompasClient.fetchCandidates());
 
             int found = 0;
             for (JsonNode n : leads) {
@@ -70,6 +86,28 @@ public class LeadCandidateProcessor {
             run.setMessage(trim(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(), 1900));
             runRepository.save(run);
         }
+    }
+
+    // --- wybór źródeł wg trybu (wartości z UI: wszystko / przetargi i zapytania /
+    //     tylko newsy / tylko zwiadowca / tylko kompas) ---
+
+    private static boolean has(String tryb, String... keys) {
+        String t = tryb == null ? "" : tryb.toLowerCase();
+        for (String k : keys) if (t.contains(k)) return true;
+        return false;
+    }
+
+    static boolean wantsZwiadowca(String tryb) {
+        return has(tryb, "wszystk", "zwiadowc", "przetarg", "zapytan");
+    }
+
+    static boolean wantsKompas(String tryb) {
+        return has(tryb, "wszystk", "kompas", "przetarg", "zapytan", "zlecen");
+    }
+
+    static boolean wantsDify(String tryb) {
+        // Dify dostarcza BZP/TED/Tavily; pomijamy je tylko dla trybów wyłącznie Zwiadowca/Kompas.
+        return !(has(tryb, "tylko") && has(tryb, "zwiadowc", "kompas"));
     }
 
     /** @return true jeśli dodano NOWEGO kandydata. */

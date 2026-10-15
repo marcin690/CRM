@@ -1,0 +1,4 @@
+{"content":[
+  {"id":"172592","investment":{"id":"1","name":"Zabudowa terenu dawnej Elektrowni Szombierki - rewitalizacja","city":{"name":"Bytom","province":"śląskie"},"subsector":{"id":4,"name":"hotele, pensjonaty"}},"company":{"name":"Inwestor Hotelowy Sp. z o.o."},"deadlines":{"offerDeadlineFrom":"2026-10-14","offerDeadlineTo":"2026-11-14"},"scopes":["service","delivery"],"industries":[{"name":"drobne wyposażenie"},{"name":"sprzęt biurowy"}],"publishAt":"2026-10-14","status":"RELEASED"},
+  {"id":"172591","investment":{"id":"2","name":"Nowa siedziba L Elektro","city":{"name":"Wyszków","province":"mazowieckie"},"subsector":{"id":7,"name":"budynki magazynowe, centra logistyczne"}},"company":{"name":"Integra Elektro Sp. z o.o."},"deadlines":{"offerDeadlineTo":"2026-11-14"},"scopes":["service"],"industries":[{"name":"GW kubaturowy"}],"publishAt":"2026-10-14","status":"RELEASED"}
+]}
