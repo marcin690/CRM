@@ -224,12 +224,7 @@ public class LeadCandidateService {
     }
 
     private LeadCandidateDto toDto(LeadCandidate c) {
-        return new LeadCandidateDto(
-                c.getId(), c.getNazwa(), c.getMiasto(), c.getWojewodztwo(), c.getRodzaj(),
-                c.getPunkty(), c.isPrzetarg(), c.getStatus().name(),
-                c.getSygnalyJson() == null ? "[]" : c.getSygnalyJson(),
-                c.getSzczegolyJson() == null ? "{}" : c.getSzczegolyJson(),
-                c.getZrodloUrl(), c.getGeneratedAt(), c.getAcceptedLeadId());
+        return LeadCandidateDto.from(c);
     }
 
     private LeadCandidateRunDto toRunDto(LeadCandidateRun r) {
