@@ -118,6 +118,7 @@ public class LeadCandidateService {
                 : (c.getZrodloUrl().length() > 500 ? c.getZrodloUrl().substring(0, 500) : c.getZrodloUrl()));
         dto.setLeadSourceId(resolveLeadSource().getId());
         dto.setFinal(false);
+        dto.setReturningClient(false); // kolumna is_returning_client jest NOT NULL (V8) — lead z rynku to nowy klient
 
         LeadDTO saved = leadService.save(dto);
 
