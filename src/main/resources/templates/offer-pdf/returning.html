@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{offer-pdf/parts :: head(${'Oferta ' + doc.projectName})}"></head>
+<body>
+<section th:replace="~{offer-pdf/parts :: cover}"></section>
+<section th:replace="~{offer-pdf/parts :: situation('Jak rozumiemy Waszą sytuację?')}"></section>
+<section th:replace="~{offer-pdf/parts :: similar}"></section>
+<section th:replace="~{offer-pdf/parts :: schedule}"></section>
+<section th:replace="~{offer-pdf/parts :: needs}"></section>
+<section th:replace="~{offer-pdf/parts :: pricing}"></section>
+<section th:replace="~{offer-pdf/parts :: optimization('Wstępna propozycja optymalizacji')}"></section>
+<section th:replace="~{offer-pdf/parts :: team}"></section>
+<section th:replace="~{offer-pdf/parts :: faq}"></section>
+<section th:replace="~{offer-pdf/parts :: contact}"></section>
+</body>
+</html>

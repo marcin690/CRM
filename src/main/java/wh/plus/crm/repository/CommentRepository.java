@@ -18,4 +18,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Long countByClientId(Long entityId);
 
     Long countByOfferId(Long entityId);
+
+    // kontekst dla AI oferty PDF: ręczne notatki handlowców (bez automatycznych wpisów systemu)
+    List<Comment> findTop15ByOfferIdAndAutomaticFalseOrderByIdDesc(Long offerId);
+
+    List<Comment> findTop15ByLeadIdAndAutomaticFalseOrderByIdDesc(Long leadId);
+
+    List<Comment> findTop15ByClientIdAndAutomaticFalseOrderByIdDesc(Long clientId);
 }

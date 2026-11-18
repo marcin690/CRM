@@ -98,4 +98,31 @@ public class MinioUploadService {
             throw new RuntimeException("Nie udało się przesłać pliku: " + e.getMessage());
         }
     }
+
+    /** Zapis wygenerowanego pliku (np. PDF oferty) pod podaną nazwą; zwraca publiczny URL. */
+    public String uploadBytes(byte[] bytes, String objectName, String contentType) {
+        try (InputStream in = new java.io.ByteArrayInputStream(bytes)) {
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(objectName)
+                    .stream(in, bytes.length, -1).contentType(contentType).build());
+            return publicUrl + "/" + bucket + "/" + objectName;
+        } catch (Exception e) {
+            log.error("Błąd zapisu do MinIO: {}", e.getMessage(), e);
+            throw new IllegalStateException("Nie udało się zapisać pliku: " + e.getMessage());
+        }
+    }
+
+    /** Publiczny prefiks plików z tego bucketa, np. https://…/crm-uploads/ */
+    public String publicPrefix() {
+        return publicUrl + "/" + bucket + "/";
+    }
+
+    /** Usuwa plik po jego publicznym URL-u; obce adresy pomija. Błąd tylko logujemy — sprzątanie nie może psuć zapisu. */
+    public void deleteByUrl(String url) {
+        if (url == null || !url.startsWith(publicPrefix())) return;
+        try {
+            minioClient.removeObject(io.minio.RemoveObjectArgs.builder().bucket(bucket).object(url.substring(publicPrefix().length())).build());
+        } catch (Exception e) {
+            log.warn("Nie udało się usunąć pliku {}: {}", url, e.getMessage());
+        }
+    }
 }

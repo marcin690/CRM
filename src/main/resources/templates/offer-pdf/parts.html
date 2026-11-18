@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Wspólne fragmenty oferty PDF (new.html, returning.html).
+  Assety (fonty, logo, zdjęcia) leżą obok index.html u Gotenberga, więc odwołania są gołą nazwą pliku.
+  Strony mają min-height A4, a nie stałą wysokość: dłuższa treść przejdzie na kolejną kartkę zamiast zniknąć.
+-->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <title th:text="${title}">Oferta</title>
+    <style>
+        @font-face { font-family: 'Manrope'; font-weight: 200 800; font-style: normal;
+            src: url('manrope-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+        @font-face { font-family: 'Manrope'; font-weight: 200 800; font-style: normal;
+            src: url('manrope-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+        :root {
+            --navy: #354d73;   /* kolor marki ze strony */
+            --deep: #1d2c39;
+            --ink: #17232e;
+            --copy: #3c4855;
+            --muted: #6b7682;
+            --sage: #b9cfc8;
+            --moss: #476b62;
+            --paper: #f2f4f3;
+            --line: #dce0e3;
+        }
+        /* Ciągły układ: sekcje płyną jedna pod drugą, tylko okładka ma własną stronę bez marginesów. */
+        @page { size: A4; margin: 16mm 18mm 16mm; }
+        @page cover { margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { font-family: 'Manrope', sans-serif; color: var(--copy); font-size: 9.5pt; line-height: 1.5; background: #fff; }
+        img { display: block; }
+
+        .sec { margin-bottom: 8mm; }
+        .sec > h2 { font-weight: 600; font-size: 15pt; line-height: 1.2; color: var(--ink); padding-bottom: 2.5mm;
+                    margin-bottom: 4.5mm; border-bottom: 1.5px solid var(--navy); break-after: avoid; }
+        h3 { font-weight: 600; font-size: 10pt; line-height: 1.3; color: var(--ink); }
+        .muted { color: var(--muted); }
+        .keep { break-inside: avoid; }
+        a { color: var(--navy); }
+
+        /* ikony: jeden styl liniowy, kolor dziedziczony z rodzica */
+        .ic { width: 4.6mm; height: 4.6mm; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5;
+              stroke-linecap: round; stroke-linejoin: round; }
+        .ilist { list-style: none; }
+        .ilist li { display: flex; gap: 2.5mm; align-items: flex-start; color: var(--ink); break-inside: avoid; }
+        .ilist .ic { color: var(--moss); margin-top: .2mm; }
+        .tile { display: flex; align-items: center; justify-content: center; flex: none; width: 9mm; height: 9mm;
+                border-radius: 50%; background: var(--paper); color: var(--navy); }
+
+        /* ---------- okładka ---------- */
+        .cover { page: cover; position: relative; width: 210mm; height: 297mm; break-after: page; overflow: hidden;
+                 background: var(--deep) url('cover.jpg') center 30% / cover no-repeat; color: #fff; }
+        .cover::before { content: ""; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(23,35,46,.5) 0%, rgba(23,35,46,0) 25%, rgba(29,44,57,.3) 50%, rgba(29,44,57,.95) 75%, var(--deep) 100%); }
+        .cover > * { position: relative; }
+        .cover .logo { position: absolute; top: 18mm; left: 20mm; width: 52mm; }
+        .cover .body { position: absolute; left: 20mm; right: 20mm; bottom: 22mm; }
+        .cover .for { font-size: 10pt; color: var(--sage); margin-bottom: 4mm; }
+        .cover h1 { font-weight: 400; font-size: 36pt; line-height: 1.05; letter-spacing: -.02em; }
+        .cover .headline { margin-top: 5mm; font-size: 12pt; color: #d5dfdc; max-width: 150mm; }
+        .cover .meta { margin-top: 12mm; display: flex; gap: 12mm; font-size: 9.5pt; border-top: 1px solid rgba(185,207,200,.4); padding-top: 4mm; }
+        .cover .meta small { display: block; font-size: 7.5pt; color: #9fb3b6; }
+
+        /* ---------- sytuacja ---------- */
+        .situation { display: grid; grid-template-columns: 52mm 1fr; gap: 8mm; }
+        .aside { background: var(--paper); border-radius: 2mm; padding: 5mm; align-self: start; font-size: 9pt; }
+        .aside h4 { font-size: 8pt; font-weight: 600; color: var(--moss); margin-bottom: 1.5mm; }
+        .aside ul { list-style: none; margin-bottom: 4mm; }
+        .aside ul:last-child { margin-bottom: 0; }
+        .aside li { padding: .6mm 0; gap: 2mm; }
+        .aside .ic { width: 4mm; height: 4mm; color: var(--navy); }
+        .points li { margin-bottom: 2.2mm; }
+        .goal { margin-top: 5mm; background: var(--navy); color: #fff; border-radius: 2mm; padding: 5mm 6mm; font-size: 11pt; break-inside: avoid; }
+        .goal strong { display: block; font-size: 8pt; font-weight: 600; color: var(--sage); margin-bottom: 1mm; }
+
+        /* ---------- realizacje ---------- */
+        .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+        .gallery img { width: 100%; height: 34mm; object-fit: cover; border-radius: 2mm; background: var(--paper); margin-bottom: 2mm; }
+        /* opisy z WordPressa bywają długie: tniemy do 4 linii */
+        .gallery p { font-size: 8.5pt; color: var(--muted); margin-top: .5mm;
+                     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+
+        /* ---------- harmonogram: oś czasu (pozioma do 5 kroków, pionowa powyżej) ---------- */
+        .tl { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+        .tl .step { position: relative; padding: 10mm 5mm 0 0; break-inside: avoid; }
+        .tl .step::before { content: ""; position: absolute; top: 3.5mm; left: 0; right: 0; height: 1.5px; background: var(--sage); }
+        .tl .step:last-child::before { right: auto; width: 7mm; }
+        .tl .dot { position: absolute; top: 0; left: 0; width: 7mm; height: 7mm; border-radius: 50%; background: var(--navy);
+                   color: #fff; font-size: 8pt; font-weight: 600; line-height: 7mm; text-align: center; }
+        .tl .period { display: block; font-size: 8pt; font-weight: 600; color: var(--moss); }
+        .tl p { font-size: 8.5pt; margin-top: .8mm; }
+        .tl.v { grid-auto-flow: row; }
+        .tl.v .step { padding: .8mm 0 4mm 12mm; }
+        .tl.v .step::before { top: 0; bottom: 0; left: 3.5mm; right: auto; width: 1.5px; height: auto; }
+        .tl.v .step:last-child::before { display: none; }
+
+        /* ---------- potrzeby ---------- */
+        .needs { background: var(--paper); border-radius: 2mm; padding: 4.5mm 5mm; display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm 8mm; }
+
+        /* ---------- o firmie + listy ---------- */
+        .about { display: grid; grid-template-columns: 62mm 1fr; gap: 7mm; align-items: start; }
+        .about .photo { height: 44mm; border-radius: 2mm; background: url('about.jpg') center 40% / cover no-repeat; }
+        .about p + p { margin-top: 2.5mm; }
+        .facts { display: grid; grid-template-columns: .7fr 1.15fr 1.15fr 1fr; gap: 4mm; margin-top: 5mm; padding: 3.5mm 0;
+                 border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .facts div { display: flex; align-items: center; gap: 2.5mm; font-size: 8.5pt; line-height: 1.3; color: var(--ink); }
+        .facts b { display: block; font-size: 11pt; font-weight: 600; color: var(--navy); }
+        .letters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3mm; margin-top: 5mm; }
+        .letters img { width: 100%; aspect-ratio: 210 / 297; object-fit: cover; object-position: top; border: 1px solid var(--line); border-radius: 1mm; }
+
+        /* ---------- wycena ---------- */
+        .price { width: 100%; border-collapse: collapse; }
+        .price td { padding: 2.8mm 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+        .price tr { break-inside: avoid; }
+        /* udział grup w sumie: pasek + procent przy grupie, kolory w tej samej kolejności */
+        .share { display: flex; gap: .6mm; height: 3mm; border-radius: 1.5mm; overflow: hidden; margin-bottom: 2mm; }
+        .share i:nth-child(5n+1), .price tr:nth-child(5n+1) .sw { background: var(--navy); }
+        .share i:nth-child(5n+2), .price tr:nth-child(5n+2) .sw { background: var(--moss); }
+        .share i:nth-child(5n+3), .price tr:nth-child(5n+3) .sw { background: var(--sage); }
+        .share i:nth-child(5n+4), .price tr:nth-child(5n+4) .sw { background: #8fa3bf; }
+        .share i:nth-child(5n+5), .price tr:nth-child(5n+5) .sw { background: #c9ced3; }
+        .price .icon { width: 13mm; }
+        .price .pct { width: 22mm; white-space: nowrap; font-size: 8.5pt; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 3.3mm; }
+        .price .sw { display: inline-block; width: 2.2mm; height: 2.2mm; border-radius: 50%; margin-right: 1.5mm; }
+        .price .name { font-weight: 600; color: var(--ink); }
+        .price .incl { display: block; font-size: 8pt; color: var(--muted); font-weight: 400; margin-top: .5mm; max-width: 115mm; }
+        .price .amount { text-align: right; white-space: nowrap; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+        .price .total td { border-bottom: 0; border-top: 1.5px solid var(--ink); padding-top: 3.5mm; font-size: 12pt; }
+        .price .gross td { padding-top: 0; color: var(--muted); font-weight: 400; font-size: 9pt; }
+        .note { margin-top: 3mm; font-size: 8.5pt; color: var(--muted); display: flex; flex-wrap: wrap; gap: 1.5mm 5mm; align-items: center; }
+        .note a { display: inline-flex; align-items: center; gap: 1.2mm; font-weight: 600; }
+        .note .ic { width: 4mm; height: 4mm; }
+
+        /* ---------- optymalizacja ---------- */
+        .ideas { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 8mm; }
+        .ideas > div { display: flex; gap: 3mm; align-items: flex-start; }
+        .ideas p { margin-top: .8mm; }
+
+        /* ---------- zespół ---------- */
+        .team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm 5mm; }
+        .team figure { break-inside: avoid; }
+        .team img, .team .ph { width: 24mm; height: 24mm; border-radius: 50%; object-fit: cover; object-position: top; background: var(--paper); margin-bottom: 2.5mm; }
+        .team .ph { display: flex; align-items: center; justify-content: center; color: var(--muted); }
+        .team .ph .ic { width: 9mm; height: 9mm; }
+        .team .role { display: block; font-size: 8.5pt; color: var(--moss); }
+        .team ul { list-style: none; margin-top: 1.5mm; font-size: 7.5pt; line-height: 1.4; color: var(--copy); }
+        .team li { padding-left: 2.5mm; text-indent: -2.5mm; }
+        .team li::before { content: "· "; color: var(--moss); font-weight: 800; }
+        .team .contact { display: block; font-size: 7.5pt; color: var(--muted); margin-top: 1.5mm; }
+
+        /* ---------- FAQ ---------- */
+        .faq div { display: grid; grid-template-columns: 58mm 1fr; gap: 6mm; padding: 2.5mm 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
+
+        /* ---------- kontakt ---------- */
+        .contact-box { display: flex; justify-content: space-between; align-items: center; gap: 8mm; background: var(--deep); color: #dfe7e4;
+                       border-radius: 2mm; padding: 6mm 7mm; break-inside: avoid; }
+        .contact-box .name { font-size: 12pt; font-weight: 600; color: #fff; }
+        .contact-box img { width: 40mm; }
+        .contact-box .line { display: flex; align-items: center; gap: 4mm; margin-top: 1.5mm; }
+        .contact-box .line span { display: inline-flex; align-items: center; gap: 1.5mm; }
+        .contact-box .ic { width: 4mm; height: 4mm; color: var(--sage); }
+    </style>
+</head>
+<body>
+
+<!-- Ikony: inline SVG 24x24, kreska 1.5 (styl w .ic). Nieznana nazwa = puste SVG. -->
+<svg th:fragment="icon(name)" class="ic" viewBox="0 0 24 24" aria-hidden="true" th:switch="${name}">
+    <path th:case="'bed'" d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 15.5h18M5 10V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M3 18v2M21 18v2"/>
+    <path th:case="'dining'" d="M6 3v6a3 3 0 0 0 6 0V3M9 3v18M18 21V3c-2.2 1.6-3.5 4-3.5 7v3H18"/>
+    <path th:case="'sofa'" d="M5.5 11V8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v3M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM6 18v2M18 18v2"/>
+    <path th:case="'box'" d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/>
+    <path th:case="'chat'" d="M4 5h16v11H10l-5 4v-4H4zM8 9h8M8 12h5"/>
+    <path th:case="'check'" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12.5l3 3 5-6"/>
+    <path th:case="'task'" d="M8.5 5H6v16h12V5h-2.5M9 3h6v4H9zM9 14l2 2 4-4.5"/>
+    <path th:case="'bulb'" d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-4 10.5c.7.7 1.2 1.5 1.2 2.5h5.6c0-1 .5-1.8 1.2-2.5A6 6 0 0 0 12 3z"/>
+    <path th:case="'calendar'" d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>
+    <path th:case="'pencil'" d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>
+    <path th:case="'wrench'" d="M15 4a5 5 0 0 0-5.6 6.9L4 16.3V20h3.7l5.4-5.4A5 5 0 0 0 20 9l-3 3-2.5-.5L14 9z"/>
+    <path th:case="'user'" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c.8-3.5 3.8-5.5 7.5-5.5s6.7 2 7.5 5.5"/>
+    <path th:case="'phone'" d="M6 3h3.5l1.5 4.5-2 1.5a12 12 0 0 0 6 6l1.5-2 4.5 1.5V18a3 3 0 0 1-3 3A15 15 0 0 1 3 6a3 3 0 0 1 3-3z"/>
+    <path th:case="'mail'" d="M3 6h18v12H3zM3 7l9 6.5L21 7"/>
+    <path th:case="'file'" d="M7 3h7l4 4v14H7zM14 3v4h4M10 13h5M10 16.5h5"/>
+</svg>
+
+<!-- Ikona grupy wyceny / zakresu dobrana po nazwie: pokoje, restauracja, części wspólne, reszta -->
+<th:block th:fragment="gicon(name)" th:with="n=${name == null ? '' : #strings.toLowerCase(name)}">
+    <svg th:replace="~{offer-pdf/parts :: icon(${#strings.contains(n, 'pok') ? 'bed'
+        : (#strings.contains(n, 'restaur') or #strings.contains(n, 'gastro') or #strings.contains(n, 'bar') ? 'dining'
+        : (#strings.contains(n, 'wsp') or #strings.contains(n, 'lobby') or #strings.contains(n, 'recepc') ? 'sofa' : 'box'))})}"></svg>
+</th:block>
+
+<!-- okładka; jedyna strona na całą szerokość -->
+<section th:fragment="cover" class="cover">
+    <img class="logo" src="logo-white.png" alt="WH PLUS Producent mebli">
+    <div class="body">
+        <p class="for" th:text="${'Oferta dla ' + doc.clientName}">Oferta dla klienta</p>
+        <h1 th:text="${doc.projectName}">Projekt</h1>
+        <p class="headline" th:if="${doc.headline}" th:text="${doc.headline}">Podtytuł</p>
+        <div class="meta">
+            <div th:if="${doc.date}"><small>Data</small><span th:text="${doc.date}">17 listopada 2026</span></div>
+            <div th:if="${doc.preparedBy}"><small>Przygotował(a)</small><span th:text="${doc.preparedBy.name}">Imię Nazwisko</span></div>
+            <div th:if="${doc.offerId}"><small>Numer oferty</small><span th:text="${'WH/' + doc.offerId}">WH/1</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- zakres, priorytety, sytuacja i cel -->
+<section th:fragment="situation(title)" class="sec"
+         th:if="${!#lists.isEmpty(doc.situation) or !#lists.isEmpty(doc.scope) or doc.goal != null}">
+    <h2 th:text="${title}">Jak rozumiemy Waszą sytuację?</h2>
+    <div class="situation">
+        <div class="aside" th:if="${!#lists.isEmpty(doc.scope) or !#lists.isEmpty(doc.priorities)}">
+            <th:block th:if="${!#lists.isEmpty(doc.scope)}">
+                <h4>Zakres oferty</h4>
+                <ul class="ilist"><li th:each="s : ${doc.scope}"><svg th:replace="~{offer-pdf/parts :: gicon(${s})}"></svg><span th:text="${s}">Pokoje</span></li></ul>
+            </th:block>
+            <th:block th:if="${!#lists.isEmpty(doc.priorities)}">
+                <h4>Najważniejsze dla Was</h4>
+                <ul class="ilist"><li th:each="p : ${doc.priorities}"><svg th:replace="~{offer-pdf/parts :: icon('check')}"></svg><span th:text="${p}">Jakość</span></li></ul>
+            </th:block>
+        </div>
+        <div>
+            <ul class="points ilist" th:if="${!#lists.isEmpty(doc.situation)}">
+                <li th:each="s : ${doc.situation}"><svg th:replace="~{offer-pdf/parts :: icon('chat')}"></svg><span th:text="${s}">Punkt</span></li>
+            </ul>
+            <div class="goal" th:if="${doc.goal}"><strong>Jaki mamy cel?</strong><span th:text="${doc.goal}">Cel</span></div>
+        </div>
+    </div>
+</section>
+
+<section th:fragment="similar" class="sec keep" th:if="${!#lists.isEmpty(doc.similar)}">
+    <h2>Podobne realizacje</h2>
+    <div class="gallery">
+        <figure th:each="p, it : ${doc.similar}" th:if="${it.index < 3}">
+            <img th:if="${p.imageUrl}" th:src="${p.imageUrl}" th:alt="${p.title}" src="" alt="">
+            <h3 th:text="${p.title}">Realizacja</h3>
+            <p th:if="${p.description}" th:text="${p.description}">Opis</p>
+        </figure>
+    </div>
+</section>
+
+<section th:fragment="schedule" class="sec" th:if="${!#lists.isEmpty(doc.schedule)}">
+    <h2>Jaki mamy plan działania?</h2>
+    <div class="tl" th:classappend="${doc.schedule.size() > 5} ? 'v'">
+        <div class="step" th:each="s, it : ${doc.schedule}">
+            <span class="dot" th:text="${it.count}">1</span>
+            <span class="period" th:if="${s.period}" th:text="${s.period}">Listopad 2026</span>
+            <h3 th:text="${s.title}">Krok</h3>
+            <p th:if="${s.description}" th:text="${s.description}">Opis</p>
+        </div>
+    </div>
+</section>
+
+<section th:fragment="needs" class="sec keep" th:if="${!#lists.isEmpty(doc.needs)}">
+    <h2>Czego potrzebujemy od Was?</h2>
+    <ul class="needs ilist"><li th:each="n : ${doc.needs}"><svg th:replace="~{offer-pdf/parts :: icon('task')}"></svg><span th:text="${n}">Potrzeba</span></li></ul>
+</section>
+
+<!-- stała treść o firmie (slajd 1 oferty OTIS) + listy referencyjne -->
+<section th:fragment="about" class="sec keep">
+    <h2>O WH PLUS</h2>
+    <div class="about">
+        <div class="photo"></div>
+        <div>
+            <p>Twoim gościom zależy na tym, aby poczuć się jak w domu. Wobec tego poprzeczka jest zawieszona wysoko. Przeskoczyliśmy nad nią już ponad 20 000 razy, bo dokładnie tyle pokoi hotelowych wyposażyliśmy w trakcie 27 lat na rynku.</p>
+            <p>Mamy dział projektowy i produkcyjny, dlatego nie ograniczamy się do sprzedaży z katalogu. Wykonamy wyposażenie dopasowane do Waszego obiektu.</p>
+        </div>
+    </div>
+    <div class="facts">
+        <div><span class="tile"><svg th:replace="~{offer-pdf/parts :: icon('calendar')}"></svg></span><span><b>27 lat</b>na rynku</span></div>
+        <div><span class="tile"><svg th:replace="~{offer-pdf/parts :: icon('bed')}"></svg></span><span><b>ponad 20 000</b>wyposażonych pokoi</span></div>
+        <div><span class="tile"><svg th:replace="~{offer-pdf/parts :: icon('pencil')}"></svg></span><span>Własny dział projektowy i produkcja</span></div>
+        <div><span class="tile"><svg th:replace="~{offer-pdf/parts :: icon('wrench')}"></svg></span><span>Własna ekipa montażowa</span></div>
+    </div>
+    <th:block th:if="${!#lists.isEmpty(doc.referenceLetters)}">
+        <h3 style="margin-top:5mm">Listy referencyjne</h3>
+        <div class="letters" style="margin-top:2.5mm">
+            <img th:each="l, it : ${doc.referenceLetters}" th:if="${it.index < 6}" th:src="${l}" src="" alt="List referencyjny">
+        </div>
+    </th:block>
+</section>
+
+<section th:fragment="pricing" class="sec keep" th:if="${doc.pricing != null and !#lists.isEmpty(doc.pricing.groups)}"
+         th:with="cur=${doc.pricing.currency ?: 'PLN'}, tot=${doc.pricing.totalNet},
+                  share=${doc.pricing.totalNet != null and doc.pricing.totalNet.signum() > 0 and doc.pricing.groups.size() > 1}">
+    <h2>Wycena</h2>
+    <!-- udział grup w sumie netto; przy jednej grupie pasek nic nie mówi, więc go nie ma -->
+    <div class="share" th:if="${share}">
+        <i th:each="g : ${doc.pricing.groups}" th:if="${g.net != null and g.net.signum() > 0}" th:style="${'flex:' + g.net.doubleValue() + ' 1 0'}"></i>
+    </div>
+    <table class="price">
+        <tr th:each="g : ${doc.pricing.groups}">
+            <td class="icon"><span class="tile"><svg th:replace="~{offer-pdf/parts :: gicon(${g.name})}"></svg></span></td>
+            <td class="name">
+                <span th:text="${g.name}">Pokoje</span>
+                <span class="incl" th:if="${!#lists.isEmpty(g.lines)}"
+                      th:text="${#strings.listJoin(g.lines.size() > 4 ? g.lines.subList(0, 4).![title] : g.lines.![title], ', ') + (g.lines.size() > 4 ? ' i inne' : '')}">W tym</span>
+            </td>
+            <td class="pct" th:if="${share}"><th:block th:if="${g.net != null and g.net.signum() > 0}"><i class="sw"></i><span
+                    th:text="${#numbers.formatDecimal(g.net.doubleValue() * 100 / tot.doubleValue(), 1, 0) + '%'}">50%</span></th:block></td>
+            <td class="amount" th:text="${#numbers.formatDecimal(g.net, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
+        </tr>
+        <tr class="total">
+            <td class="name" th:colspan="${share ? 3 : 2}">Razem netto</td>
+            <td class="amount" th:text="${#numbers.formatDecimal(doc.pricing.totalNet, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
+        </tr>
+        <tr class="gross" th:if="${doc.pricing.totalGross}">
+            <td th:colspan="${share ? 3 : 2}">Brutto</td>
+            <td class="amount" th:text="${#numbers.formatDecimal(doc.pricing.totalGross, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
+        </tr>
+    </table>
+    <!-- nota tylko gdy handlowiec dołączył pliki -->
+    <p class="note" th:if="${!#lists.isEmpty(doc.attachments)}">
+        <span>Szczegółowe wyliczenie w załącznikach:</span>
+        <a th:each="a : ${doc.attachments}" th:href="${a.url}"><svg th:replace="~{offer-pdf/parts :: icon('file')}"></svg><span th:text="${a.name}">Wycena.xlsx</span></a>
+    </p>
+</section>
+
+<section th:fragment="optimization(title)" class="sec keep" th:if="${!#lists.isEmpty(doc.optimization)}">
+    <h2 th:text="${title}">Propozycja optymalizacji</h2>
+    <div class="ideas">
+        <div th:each="o : ${doc.optimization}" class="keep">
+            <span class="tile"><svg th:replace="~{offer-pdf/parts :: icon('bulb')}"></svg></span>
+            <div>
+                <h3 th:text="${o.title}">Pomysł</h3>
+                <p th:if="${o.description}" th:text="${o.description}">Opis</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section th:fragment="team" class="sec keep" th:if="${!#lists.isEmpty(doc.team)}">
+    <h2>Opiekunowie projektu</h2>
+    <div class="team">
+        <figure th:each="p : ${doc.team}">
+            <img th:if="${p.photoUrl}" th:src="${p.photoUrl}" th:alt="${p.name}" src="" alt="">
+            <div class="ph" th:unless="${p.photoUrl}"><svg th:replace="~{offer-pdf/parts :: icon('user')}"></svg></div>
+            <h3 th:text="${p.name}">Imię Nazwisko</h3>
+            <span class="role" th:if="${p.role}" th:text="${p.role}">Rola</span>
+            <ul th:if="${!#lists.isEmpty(p.helps)}"><li th:each="h, it : ${p.helps}" th:if="${it.index < 3}" th:text="${h}">W czym pomoże</li></ul>
+            <span class="contact" th:if="${p.email != null or p.phone != null}">
+                <th:block th:if="${p.phone}" th:text="${p.phone}"></th:block><br th:if="${p.phone != null and p.email != null}">
+                <th:block th:if="${p.email}" th:text="${p.email}"></th:block>
+            </span>
+        </figure>
+    </div>
+</section>
+
+<section th:fragment="faq" class="sec" th:if="${!#lists.isEmpty(doc.faq)}">
+    <h2>FAQ</h2>
+    <div class="faq">
+        <div th:each="q : ${doc.faq}">
+            <h3 th:text="${q.question}">Pytanie</h3>
+            <p th:text="${q.answer}">Odpowiedź</p>
+        </div>
+    </div>
+</section>
+
+<section th:fragment="contact" class="contact-box">
+    <div th:if="${doc.preparedBy}" th:with="p=${doc.preparedBy}">
+        <p class="name" th:text="${p.name}">Imię Nazwisko</p>
+        <p th:if="${p.role}" th:text="${p.role}">Rola</p>
+        <p class="line" th:if="${p.phone != null or p.email != null}">
+            <span th:if="${p.phone}"><svg th:replace="~{offer-pdf/parts :: icon('phone')}"></svg><th:block th:text="${p.phone}"></th:block></span>
+            <span th:if="${p.email}"><svg th:replace="~{offer-pdf/parts :: icon('mail')}"></svg><th:block th:text="${p.email}"></th:block></span>
+        </p>
+    </div>
+    <div><img src="logo-white.png" alt="WH PLUS"><p style="margin-top:2mm;font-size:8pt">wyposazenie-hotelowe.pl</p></div>
+</section>
+
+</body>
+</html>

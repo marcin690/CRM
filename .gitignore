@@ -37,3 +37,6 @@ build/
 
 # Lokalne sekrety (import przez spring.config.import)
 local.properties
+
+# Zapisy sesji Claude (lokalne, nie commitować)
+.claude-sessions/

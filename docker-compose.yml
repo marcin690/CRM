@@ -2,7 +2,7 @@
 #
 #   docker compose up -d                  → sama INFRA (MySQL + MinIO).
 #                                           Backend i frontend uruchamiasz z IntelliJ
-#                                           (profil dev łączy się z MySQL na :13306, MinIO na :19900).
+#                                           (profil dev łączy się z MySQL na :13306, S3 na :19910).
 #   docker compose --profile app up -d --build
 #                                         → WSZYSTKO w Dockerze (infra + backend + frontend).
 #
@@ -29,18 +29,21 @@ services:
       retries: 20
 
   crm-minio:
-    # MinIO nie publikuje taga `latest` — konkretny RELEASE (ten sam, którego już używasz lokalnie).
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    container_name: crm-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+    # S3 zgodne z MinIO (obrazy MinIO zniknęły z quay.io i Docker Hub). Port 19910, bo 19900 zajmuje streetcom-s3.
+    image: chrislusf/seaweedfs:4.53
+    container_name: crm-s3
+    command: ["server", "-dir=/data", "-s3"]
     ports:
-      - "19900:9000"   # S3 API
-      - "19901:9001"   # konsola webowa
+      - "19910:8333"   # S3 API
     volumes:
-      - crm-minio-data:/data
+      - crm-s3-data:/data
+
+  crm-gotenberg:
+    # HTML → PDF (Chromium) dla automatycznej oferty. Na Railway: osobny serwis z tego obrazu + env GOTENBERG_URL w backendzie.
+    image: gotenberg/gotenberg:8
+    container_name: crm-gotenberg
+    ports:
+      - "13000:3000"
 
   # ---------- APLIKACJA (profil `app`) ----------
   crm-backend:
@@ -55,11 +58,12 @@ services:
       DB_HOST: crm-mysql
       DB_PORT: "3306"
       # MinIO: endpoint wewnętrzny (sieć kontenerów), public-url widoczny z przeglądarki
-      MINIO_ENDPOINT: http://crm-minio:9000
+      MINIO_ENDPOINT: http://crm-minio:8333
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: crm-uploads
-      MINIO_PUBLIC_URL: http://localhost:19900
+      MINIO_PUBLIC_URL: http://localhost:19910
+      GOTENBERG_URL: http://crm-gotenberg:3000
     ports:
       - "18080:8080"
     depends_on:
@@ -83,4 +87,4 @@ services:
 
 volumes:
   crm-mysql-data:
-  crm-minio-data:
+  crm-s3-data:
