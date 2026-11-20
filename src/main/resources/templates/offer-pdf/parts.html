@@ -117,13 +117,21 @@
         .price { width: 100%; border-collapse: collapse; }
         .price td { padding: 2.8mm 0; border-bottom: 1px solid var(--line); vertical-align: top; }
         .price tr { break-inside: avoid; }
+        .price tbody { break-inside: auto; }
+        .price .grp td { border-bottom: 0; padding-bottom: 1mm; }
+        /* nagłówek grupy nie zostaje sam na dole strony, Razem netto nie odrywa się od Brutto */
+        .share, .price .grp, .price .total { break-after: avoid; page-break-after: avoid; }
+        .price .item td { padding: 1.2mm 0; border-bottom: 0; font-size: 8.5pt; color: var(--copy); }
+        .price .item:last-child td { padding-bottom: 2.8mm; border-bottom: 1px solid var(--line); }
+        .price .item .amount { font-weight: 400; color: var(--copy); }
+        .price .item .qty { color: var(--muted); white-space: nowrap; padding-left: 3mm; }
         /* udział grup w sumie: pasek + procent przy grupie, kolory w tej samej kolejności */
         .share { display: flex; gap: .6mm; height: 3mm; border-radius: 1.5mm; overflow: hidden; margin-bottom: 2mm; }
-        .share i:nth-child(5n+1), .price tr:nth-child(5n+1) .sw { background: var(--navy); }
-        .share i:nth-child(5n+2), .price tr:nth-child(5n+2) .sw { background: var(--moss); }
-        .share i:nth-child(5n+3), .price tr:nth-child(5n+3) .sw { background: var(--sage); }
-        .share i:nth-child(5n+4), .price tr:nth-child(5n+4) .sw { background: #8fa3bf; }
-        .share i:nth-child(5n+5), .price tr:nth-child(5n+5) .sw { background: #c9ced3; }
+        .share i:nth-child(5n+1), .price tbody:nth-of-type(5n+1) .sw { background: var(--navy); }
+        .share i:nth-child(5n+2), .price tbody:nth-of-type(5n+2) .sw { background: var(--moss); }
+        .share i:nth-child(5n+3), .price tbody:nth-of-type(5n+3) .sw { background: var(--sage); }
+        .share i:nth-child(5n+4), .price tbody:nth-of-type(5n+4) .sw { background: #8fa3bf; }
+        .share i:nth-child(5n+5), .price tbody:nth-of-type(5n+5) .sw { background: #c9ced3; }
         .price .icon { width: 13mm; }
         .price .pct { width: 22mm; white-space: nowrap; font-size: 8.5pt; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 3.3mm; }
         .price .sw { display: inline-block; width: 2.2mm; height: 2.2mm; border-radius: 50%; margin-right: 1.5mm; }
@@ -160,6 +168,8 @@
         .contact-box { display: flex; justify-content: space-between; align-items: center; gap: 8mm; background: var(--deep); color: #dfe7e4;
                        border-radius: 2mm; padding: 6mm 7mm; break-inside: avoid; }
         .contact-box .name { font-size: 12pt; font-weight: 600; color: #fff; }
+        .contact-box .who { display: flex; align-items: center; gap: 5mm; }
+        .contact-box .who img { width: 20mm; height: 20mm; border-radius: 50%; object-fit: cover; object-position: top; }
         .contact-box img { width: 40mm; }
         .contact-box .line { display: flex; align-items: center; gap: 4mm; margin-top: 1.5mm; }
         .contact-box .line span { display: inline-flex; align-items: center; gap: 1.5mm; }
@@ -204,7 +214,8 @@
         <div class="meta">
             <div th:if="${doc.date}"><small>Data</small><span th:text="${doc.date}">17 listopada 2026</span></div>
             <div th:if="${doc.preparedBy}"><small>Przygotował(a)</small><span th:text="${doc.preparedBy.name}">Imię Nazwisko</span></div>
-            <div th:if="${doc.offerId}"><small>Numer oferty</small><span th:text="${'WH/' + doc.offerId}">WH/1</span></div>
+            <div th:if="${doc.offerNumber != null or doc.offerId != null}"><small>Numer oferty</small><span th:text="${doc.offerNumber ?: 'WH/' + doc.offerId}">WH/1/1</span></div>
+            <div th:if="${doc.validUntilText()}"><small>Ważna do</small><span th:text="${doc.validUntilText()}">19 grudnia 2026</span></div>
         </div>
     </div>
 </section>
@@ -285,7 +296,7 @@
     </th:block>
 </section>
 
-<section th:fragment="pricing" class="sec keep" th:if="${doc.pricing != null and !#lists.isEmpty(doc.pricing.groups)}"
+<section th:fragment="pricing" class="sec" th:if="${doc.pricing != null and !#lists.isEmpty(doc.pricing.groups)}"
          th:with="cur=${doc.pricing.currency ?: 'PLN'}, tot=${doc.pricing.totalNet},
                   share=${doc.pricing.totalNet != null and doc.pricing.totalNet.signum() > 0 and doc.pricing.groups.size() > 1}">
     <h2>Wycena</h2>
@@ -294,17 +305,24 @@
         <i th:each="g : ${doc.pricing.groups}" th:if="${g.net != null and g.net.signum() > 0}" th:style="${'flex:' + g.net.doubleValue() + ' 1 0'}"></i>
     </div>
     <table class="price">
-        <tr th:each="g : ${doc.pricing.groups}">
+        <tbody th:each="g : ${doc.pricing.groups}">
+        <tr class="grp">
             <td class="icon"><span class="tile"><svg th:replace="~{offer-pdf/parts :: gicon(${g.name})}"></svg></span></td>
-            <td class="name">
-                <span th:text="${g.name}">Pokoje</span>
-                <span class="incl" th:if="${!#lists.isEmpty(g.lines)}"
-                      th:text="${#strings.listJoin(g.lines.size() > 4 ? g.lines.subList(0, 4).![title] : g.lines.![title], ', ') + (g.lines.size() > 4 ? ' i inne' : '')}">W tym</span>
-            </td>
+            <td class="name"><span th:text="${g.name}">Pokoje</span></td>
             <td class="pct" th:if="${share}"><th:block th:if="${g.net != null and g.net.signum() > 0}"><i class="sw"></i><span
                     th:text="${#numbers.formatDecimal(g.net.doubleValue() * 100 / tot.doubleValue(), 1, 0) + '%'}">50%</span></th:block></td>
             <td class="amount" th:text="${#numbers.formatDecimal(g.net, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
         </tr>
+        <!-- każda pozycja oferty: ilość × cena jednostkowa netto = wartość netto -->
+        <tr class="item" th:each="l : ${g.lines}">
+            <td></td>
+            <td th:colspan="${share ? 2 : 1}"><span th:text="${l.title}">Pozycja</span>
+                <span class="qty" th:if="${l.quantity != null}"
+                      th:text="${l.quantity + (l.unitNet != null ? ' × ' + #numbers.formatDecimal(l.unitNet, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur : '')}">1 × 100,00 PLN</span></td>
+            <td class="amount" th:text="${#numbers.formatDecimal(l.net, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
+        </tr>
+        </tbody>
+        <tbody>
         <tr class="total">
             <td class="name" th:colspan="${share ? 3 : 2}">Razem netto</td>
             <td class="amount" th:text="${#numbers.formatDecimal(doc.pricing.totalNet, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
@@ -313,7 +331,9 @@
             <td th:colspan="${share ? 3 : 2}">Brutto</td>
             <td class="amount" th:text="${#numbers.formatDecimal(doc.pricing.totalGross, 1, 'WHITESPACE', 2, 'COMMA') + ' ' + cur}">0,00 PLN</td>
         </tr>
+        </tbody>
     </table>
+    <p class="note" th:if="${doc.validUntilText()}" th:text="${'Oferta ważna do ' + doc.validUntilText() + '.'}">Oferta ważna do …</p>
     <!-- nota tylko gdy handlowiec dołączył pliki -->
     <p class="note" th:if="${!#lists.isEmpty(doc.attachments)}">
         <span>Szczegółowe wyliczenie w załącznikach:</span>
@@ -362,13 +382,16 @@
 </section>
 
 <section th:fragment="contact" class="contact-box">
-    <div th:if="${doc.preparedBy}" th:with="p=${doc.preparedBy}">
+    <div class="who" th:if="${doc.preparedBy}" th:with="p=${doc.preparedBy}">
+        <img th:if="${p.photoUrl}" th:src="${p.photoUrl}" th:alt="${p.name}" src="" alt="">
+        <div>
         <p class="name" th:text="${p.name}">Imię Nazwisko</p>
         <p th:if="${p.role}" th:text="${p.role}">Rola</p>
         <p class="line" th:if="${p.phone != null or p.email != null}">
             <span th:if="${p.phone}"><svg th:replace="~{offer-pdf/parts :: icon('phone')}"></svg><th:block th:text="${p.phone}"></th:block></span>
             <span th:if="${p.email}"><svg th:replace="~{offer-pdf/parts :: icon('mail')}"></svg><th:block th:text="${p.email}"></th:block></span>
         </p>
+        </div>
     </div>
     <div><img src="logo-white.png" alt="WH PLUS"><p style="margin-top:2mm;font-size:8pt">wyposazenie-hotelowe.pl</p></div>
 </section>

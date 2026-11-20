@@ -50,6 +50,9 @@ public class OfferDocument extends Auditable<String> {
 
     private String pdfUrl;
 
+    /** Kolejny numer wygenerowanego PDF w obrębie oferty (1, 2, …) — część numeru oferty w PDF. */
+    private Integer version;
+
     private LocalDateTime generatedAt;
 
     /** DRAFTING (AI pisze) | READY | RENDERING (PDF w toku) | FAILED (szkic się nie udał). */

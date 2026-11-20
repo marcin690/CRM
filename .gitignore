@@ -40,3 +40,6 @@ local.properties
 
 # Zapisy sesji Claude (lokalne, nie commitować)
 .claude-sessions/
+
+# Notatki z rozmów z Claude (lokalne)
+PRZEBIEG-ROZMOWY*.md

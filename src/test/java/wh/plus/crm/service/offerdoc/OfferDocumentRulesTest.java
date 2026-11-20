@@ -33,16 +33,35 @@ class OfferDocumentRulesTest {
 
     @Test
     void missingMarkerCheckedOnlyInAiFields() {
-        var faq = java.util.List.of(new wh.plus.crm.dto.offer.OfferPdfModel.Qa("Termin?", "[do uzupełnienia]"));
+        var faq = java.util.List.of(new wh.plus.crm.dto.offer.OfferPdfModel.Qa("Termin?", "8 tygodni"));
         var clean = new wh.plus.crm.dto.offer.OfferPdfModel("NEW", "[uzupełnij]", "K", 1L, "d", null, java.util.List.of(),
                 java.util.List.of(), "Wyposażenie 10 pokoi", java.util.List.of("ok"), "cel", java.util.List.of(), java.util.List.of(),
-                java.util.List.of(), null, java.util.List.of(), java.util.List.of(), faq, java.util.List.of(), java.util.List.of());
-        assertFalse(OfferDocumentService.hasMissing(clean)); // FAQ i nazwa projektu nie blokują — edytor ich nie pokazuje
+                java.util.List.of(), null, java.util.List.of(), java.util.List.of(), faq, java.util.List.of(), java.util.List.of(), null, null);
+        assertFalse(OfferDocumentService.hasMissing(clean)); // nazwa projektu nie jest w edytorze — nie blokuje
         var withGap = new wh.plus.crm.dto.offer.OfferPdfModel("NEW", "P", "K", 1L, "d", null, java.util.List.of(),
                 java.util.List.of(), "x", java.util.List.of("Chcecie [Uzupełnij: liczba pokoi] pokoi"), "cel", java.util.List.of(),
                 java.util.List.of(), java.util.List.of(), null, java.util.List.of(), java.util.List.of(), java.util.List.of(),
-                java.util.List.of(), java.util.List.of());
+                java.util.List.of(), java.util.List.of(), null, null);
         assertTrue(OfferDocumentService.hasMissing(withGap));
+        var faqGap = new wh.plus.crm.dto.offer.OfferPdfModel("NEW", "P", "K", 1L, "d", null, java.util.List.of(),
+                java.util.List.of(), "x", java.util.List.of("ok"), "cel", java.util.List.of(), java.util.List.of(), java.util.List.of(),
+                null, java.util.List.of(), java.util.List.of(),
+                java.util.List.of(new wh.plus.crm.dto.offer.OfferPdfModel.Qa("Termin?", "[do uzupełnienia]")),
+                java.util.List.of(), java.util.List.of(), null, null);
+        assertTrue(OfferDocumentService.hasMissing(faqGap)); // FAQ jest w edytorze z czerwoną ramką, więc też blokuje
+    }
+
+    @Test
+    void offerNumberAndValidityDate() {
+        assertEquals("WH/12/3", OfferDocumentService.offerNumber(12L, 3));
+        assertEquals("WH/12", OfferDocumentService.offerNumber(12L, null)); // dokumenty sprzed numeracji wersji
+        assertEquals("2026-12-19", OfferDocumentService.validDate(" 2026-12-19 "));
+        assertNull(OfferDocumentService.validDate("19.12.2026"));
+        assertNull(OfferDocumentService.validDate(""));
+        var today = java.time.LocalDate.of(2026, 11, 19);
+        assertTrue(OfferDocumentService.expired("2026-11-18", today));
+        assertFalse(OfferDocumentService.expired("2026-11-19", today)); // ważna jeszcze w dniu ważności
+        assertFalse(OfferDocumentService.expired(null, today));
     }
 
     @Test

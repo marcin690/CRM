@@ -48,6 +48,8 @@ public class OfferDocumentService {
     /** Znacznik braku faktu od AI: [uzupełnij: …], też z wielkiej litery i w wariancie „[do uzupełnienia]”. */
     static final Pattern MISSING = Pattern.compile("\\[\\s*(do\\s+)?uzupe[łl]n", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     static final String OTHER = "Inne";
+    static final int VALID_DAYS = 30, MAX_FAQ = 5;
+    static final java.time.ZoneId ZONE = java.time.ZoneId.of("Europe/Warsaw");
     public static final String DRAFTING = "DRAFTING", RENDERING = "RENDERING", READY = "READY", FAILED = "FAILED";
 
     private final OfferRepository offerRepository;
@@ -152,7 +154,8 @@ public class OfferDocumentService {
                         team,
                         chosenFaqs(req.faqIds()),
                         "NEW".equals(in.clientType()) ? REFERENCE_LETTERS : List.of(),
-                        req.attachments() == null ? List.of() : req.attachments());
+                        req.attachments() == null ? List.of() : req.attachments(),
+                        null, LocalDate.now(ZONE).plusDays(VALID_DAYS).toString());
                 doc.setContent(write(prepare(model, doc, itemGroups, model.date())));
                 doc.setItemGroups(write(itemGroups));
                 doc.setStatus(READY);
@@ -219,8 +222,15 @@ public class OfferDocumentService {
     public OfferDocument generatePdf(Long id) {
         OfferDocument doc = get(id);
         if (!READY.equals(doc.getStatus())) throw new IllegalStateException("Dokument jest w trakcie przetwarzania.");
-        if (hasMissing(read(doc.getContent()))) {
+        OfferPdfModel content = read(doc.getContent());
+        if (hasMissing(content)) {
             throw new IllegalStateException("W treści zostały miejsca do uzupełnienia (zaznaczone na czerwono). Uzupełnij je przed wygenerowaniem PDF.");
+        }
+        if (content.faq() != null && content.faq().stream().anyMatch(q -> blank(q.question()) || blank(q.answer()))) {
+            throw new IllegalStateException("W FAQ jest pytanie bez odpowiedzi albo odpowiedź bez pytania. Uzupełnij lub usuń ten wiersz.");
+        }
+        if (expired(content.validUntil(), LocalDate.now(ZONE))) {
+            throw new IllegalStateException("Data ważności oferty już minęła. Ustaw nową datę w polu „Oferta ważna do”.");
         }
         doc.setStatus(RENDERING);
         doc.setError(null);
@@ -233,6 +243,10 @@ public class OfferDocumentService {
             OfferPdfModel model = tx.execute(s -> {
                 OfferDocument doc = documentRepository.findById(id).orElseThrow();
                 if (!RENDERING.equals(doc.getStatus())) return null;
+                // każdy wygenerowany PDF dostaje kolejny numer, żeby klient mógł wskazać, o którą wersję mu chodzi;
+                // UNIQUE(offer_id, version) w bazie: równoległy render tej samej oferty skończy się błędem zamiast dubla
+                doc.setVersion(documentRepository.maxVersion(doc.getOffer().getId()) + 1);
+                documentRepository.saveAndFlush(doc);
                 // kwoty i data okładki aktualne na moment generowania
                 OfferPdfModel fresh = prepare(read(doc.getContent()), doc, readGroups(doc), today());
                 doc.setContent(write(fresh));
@@ -258,7 +272,9 @@ public class OfferDocumentService {
     }
 
     private void fail(Long id, String status, Exception e) {
-        String msg = e instanceof IllegalStateException && e.getMessage() != null ? e.getMessage() : "Błąd: " + e.getMessage();
+        String msg = e instanceof IllegalStateException && e.getMessage() != null ? e.getMessage()
+                : e instanceof org.springframework.dao.DataIntegrityViolationException ? "W tej chwili generuje się inny PDF tej oferty. Spróbuj ponownie za chwilę."
+                : "Błąd: " + e.getMessage();
         tx.executeWithoutResult(s -> documentRepository.findById(id).ifPresent(d -> {
             d.setStatus(status);
             d.setError(msg.length() > 990 ? msg.substring(0, 990) : msg);
@@ -287,12 +303,16 @@ public class OfferDocumentService {
                 c.similar() == null ? List.of() : c.similar().stream()
                         .map(p -> new Project(p.title(), p.description(), safeImage(p.imageUrl()))).toList(),
                 c.team() == null ? List.of() : c.team().stream().map(this::safePerson).toList(),
-                c.faq(), c.referenceLetters(),
+                c.faq() == null ? List.of() : c.faq().stream()
+                        .filter(q -> q != null && (!blank(q.question()) || !blank(q.answer()))).limit(MAX_FAQ).toList(),
+                "NEW".equals(doc.getClientType()) ? REFERENCE_LETTERS : List.of(), // nigdy z przeglądarki: Chromium pobrałby dowolny adres
                 c.attachments() == null ? List.of() : c.attachments().stream()
-                        .filter(a -> a.url() != null && a.url().matches("(?i)https?://.+")).toList());
+                        .filter(a -> a.url() != null && a.url().matches("(?i)https?://.+")).toList(),
+                offerNumber(offer.getId(), doc.getVersion()),
+                validDate(c.validUntil()));
     }
 
-    /** Znaczniki [uzupełnij] szukamy tylko w polach pisanych przez AI — tych samych, które edytor zaznacza na czerwono. */
+    /** Znaczniki [uzupełnij] w polach, które edytor zaznacza na czerwono (teksty AI i FAQ). */
     static boolean hasMissing(OfferPdfModel m) {
         List<String> texts = new ArrayList<>();
         texts.add(m.headline());
@@ -301,7 +321,22 @@ public class OfferDocumentService {
         if (m.needs() != null) texts.addAll(m.needs());
         if (m.schedule() != null) m.schedule().forEach(st -> { texts.add(st.period()); texts.add(st.title()); texts.add(st.description()); });
         if (m.optimization() != null) m.optimization().forEach(it -> { texts.add(it.title()); texts.add(it.description()); });
+        if (m.faq() != null) m.faq().forEach(q -> { texts.add(q.question()); texts.add(q.answer()); });
         return texts.stream().anyMatch(t -> t != null && MISSING.matcher(t).find());
+    }
+
+    static String offerNumber(Long offerId, Integer version) {
+        return "WH/" + offerId + (version == null ? "" : "/" + version);
+    }
+
+    static boolean expired(String validUntil, LocalDate today) {
+        String d = validDate(validUntil);
+        return d != null && LocalDate.parse(d).isBefore(today);
+    }
+
+    /** Tylko poprawna data ISO, inaczej brak (szablon wtedy nie pokazuje ważności). */
+    static String validDate(String s) {
+        try { return blank(s) ? null : LocalDate.parse(s.trim()).toString(); } catch (java.time.format.DateTimeParseException e) { return null; }
     }
 
     private Person safePerson(Person p) {
@@ -326,7 +361,7 @@ public class OfferDocumentService {
     private static String blankToNull(String s) { return blank(s) ? null : s; }
 
     private static String today() {
-        return LocalDate.now().format(DateTimeFormatter.ofPattern("d MMMM yyyy", new Locale("pl")));
+        return LocalDate.now(ZONE).format(DateTimeFormatter.ofPattern("d MMMM yyyy", new Locale("pl")));
     }
 
     private static void afterCommit(Runnable r) {
@@ -374,7 +409,8 @@ public class OfferDocumentService {
                     : it.getTax() != null ? net.add(net.multiply(BigDecimal.valueOf(it.getTax().getRate()))) : net;
             String g = itemGroups.getOrDefault(it.getId(), OTHER);
             if (!lines.containsKey(g)) g = OTHER;
-            lines.computeIfAbsent(g, k -> new ArrayList<>()).add(new Line(it.getTitle(), it.getQuantity(), net.setScale(2, RoundingMode.HALF_UP)));
+            lines.computeIfAbsent(g, k -> new ArrayList<>()).add(new Line(it.getTitle(), it.getQuantity(),
+                    it.getAmount().setScale(2, RoundingMode.HALF_UP), net.setScale(2, RoundingMode.HALF_UP)));
             BigDecimal[] s = sums.computeIfAbsent(g, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
             s[0] = s[0].add(net);
             s[1] = s[1].add(gross);

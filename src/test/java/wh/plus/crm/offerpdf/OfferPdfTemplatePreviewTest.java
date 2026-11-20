@@ -40,13 +40,16 @@ class OfferPdfTemplatePreviewTest {
             assertTrue(html.contains("Dobierze materiały i dekory"), "brak opisu „W czym pomoże”");
             assertFalse(html.contains("Czwarty punkt"), "max 3 punkty „W czym pomoże”");
             assertTrue(html.contains(">77%<"), "zły udział grupy w sumie");
+            assertTrue(html.contains("WH/1287/2"), "brak numeru wersji oferty");
+            assertTrue(html.contains("19 grudnia 2026"), "brak daty ważności");
+            assertTrue(html.contains("Szafa z garderobą") && html.contains("116 × 1 810,34"), "brak rozbicia na pozycje z ceną jednostkową");
         }
     }
 
     @Test
     void emptySectionsAreSkipped() {
         OfferPdfModel bare = new OfferPdfModel("NEW", "Projekt", "Klient", null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         String html = render(engine(), bare);
         assertFalse(html.contains("w załącznikach"), "nota o załącznikach bez załączników");
         assertFalse(html.contains("Jaki mamy plan działania?"));
@@ -74,6 +77,12 @@ class OfferPdfTemplatePreviewTest {
         try (Stream<Path> files = Files.list(dir)) {
             for (Path f : files.toList()) Files.copy(f, OUT.resolve(f.getFileName()), StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    /** Jak w produkcji: wartość = cena jednostkowa × ilość. */
+    private static Line line(String title, long qty, String unit) {
+        BigDecimal u = new BigDecimal(unit);
+        return new Line(title, qty, u, u.multiply(BigDecimal.valueOf(qty)));
     }
 
     static OfferPdfModel sample(String type) {
@@ -107,17 +116,17 @@ class OfferPdfTemplatePreviewTest {
                         new Item("Dostawy pod montaż pięter", "Dostarczamy meble partiami, więc nie potrzebujecie magazynu na budowie.")),
                 new Pricing("PLN", new BigDecimal("1284650.00"), new BigDecimal("1580119.50"), List.of(
                         new Group("Pokoje hotelowe", new BigDecimal("986400.00"), new BigDecimal("1213272.00"), List.of(
-                                new Line("Łóżko z zagłówkiem tapicerowanym", 116L, new BigDecimal("380000")),
-                                new Line("Szafa z garderobą", 116L, new BigDecimal("210000")),
-                                new Line("Biurko z konsolą TV", 116L, new BigDecimal("150000")),
-                                new Line("Stolik nocny", 232L, new BigDecimal("90000")),
-                                new Line("Fotel wypoczynkowy", 116L, new BigDecimal("156400")))),
+                                line("Łóżko z zagłówkiem tapicerowanym", 116, "3275.86"),
+                                line("Szafa z garderobą", 116, "1810.34"),
+                                line("Biurko z konsolą TV", 116, "1293.10"),
+                                line("Stolik nocny", 232, "387.93"),
+                                line("Fotel wypoczynkowy", 116, "1348.28"))),
                         new Group("Restauracja", new BigDecimal("184250.00"), new BigDecimal("226627.50"), List.of(
-                                new Line("Krzesło tapicerowane", 120L, new BigDecimal("96000")),
-                                new Line("Stół restauracyjny", 30L, new BigDecimal("88250")))),
+                                line("Krzesło tapicerowane", 120, "800.00"),
+                                line("Stół restauracyjny", 30, "2941.67"))),
                         new Group("Części wspólne", new BigDecimal("114000.00"), new BigDecimal("140220.00"), List.of(
-                                new Line("Lada recepcyjna", 1L, new BigDecimal("64000")),
-                                new Line("Sofy do lobby", 6L, new BigDecimal("50000")))))),
+                                line("Lada recepcyjna", 1, "64000.00"),
+                                line("Sofy do lobby", 6, "8333.33"))))),
                 List.of(new Project("Radisson Blu Kraków", "116 pokoi, lobby i restauracja. Projekt, produkcja i montaż w 10 tygodni.", "realizacja-1.jpg"),
                         new Project("Hotel Saski", "Sala konferencyjna i zabudowy ścienne.", "realizacja-2.jpg"),
                         new Project("Aparthotel Vistula", "Strefa wypoczynku i oświetlenie dekoracyjne.", "realizacja-3.jpg")),
@@ -134,7 +143,8 @@ class OfferPdfTemplatePreviewTest {
                         new Qa("Jakie są warunki płatności?", "Standardowo 30% zaliczki po podpisaniu umowy, reszta po montażu kolejnych etapów.")),
                 isNew ? List.of("list-1.jpg", "list-2.jpg", "list-1.jpg") : List.of(),
                 List.of(new Attachment("Wycena pokoi.xlsx", "https://crm.example/files/wycena-pokoi.xlsx"),
-                        new Attachment("Wycena restauracji i części wspólnych.xlsx", "https://crm.example/files/wycena-restauracja.xlsx"))
+                        new Attachment("Wycena restauracji i części wspólnych.xlsx", "https://crm.example/files/wycena-restauracja.xlsx")),
+                "WH/1287/2", "2026-12-19"
         );
     }
 }
